@@ -25,9 +25,9 @@
 # ER-DIAGRAM 
 THIS IS MADE ON THE DROW.IO  
 
-![alt text](<Untitled Diagram.jpg>)
+![alt text](er-diagram/Untitled%20Diagram.jpg)
 
-![alt text](image.png)
+![alt text](er-diagram/image.png)
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
