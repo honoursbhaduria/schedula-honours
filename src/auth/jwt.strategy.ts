@@ -5,7 +5,7 @@ import { Role } from './roles.enum';
 
 export interface JwtPayload {
   sub: number;
-  username: string;
+  email: string;
   role: Role;
 }
 
@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   validate(payload: JwtPayload) {
     return {
       userId: payload.sub,
-      username: payload.username,
+      email: payload.email,
       role: payload.role,
     };
   }

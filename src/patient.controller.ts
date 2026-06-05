@@ -9,7 +9,7 @@ import { Role } from './auth/roles.enum';
 export class PatientController {
   @Get('profile')
   @Roles(Role.PATIENT)
-  profile(@Req() req: { user?: { username?: string; role?: Role } }) {
+  profile(@Req() req: { user?: { email?: string; role?: Role } }) {
     return {
       message: 'Patient profile',
       user: req.user,

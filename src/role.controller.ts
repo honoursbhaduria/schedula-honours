@@ -1,30 +1,27 @@
-import {
-  Controller,
-  ForbiddenException,
-  Get,
-  Param,
-  ParseEnumPipe,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { Roles } from './auth/roles.decorator';
+import { RolesGuard } from './auth/roles.guard';
 import { Role } from './auth/roles.enum';
 
 @Controller('role')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class RoleController {
-  @Get('profile/:role')
-  profileByRole(
-    @Param('role', new ParseEnumPipe(Role)) role: Role,
-    @Req() req: { user?: { username?: string; role?: Role } },
-  ) {
-    if (req.user?.role !== role) {
-      throw new ForbiddenException('Access denied for this role');
-    }
+  @Get('doctor')
+  @Roles(Role.DOCTOR)
+  doctorOnly() {
+    return { message: 'Access granted: Doctor' };
+  }
 
-    return {
-      message: `${role} profile`,
-      user: req.user,
-    };
+  @Get('patient')
+  @Roles(Role.PATIENT)
+  patientOnly() {
+    return { message: 'Access granted: Patient' };
+  }
+
+  @Get('admin')
+  @Roles(Role.ADMIN)
+  adminOnly() {
+    return { message: 'Access granted: Admin' };
   }
 }
