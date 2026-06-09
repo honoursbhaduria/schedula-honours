@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, Min, IsBoolean } from 'class-validator';
 
 export class CreateDoctorProfileDto {
   @IsString()
@@ -24,6 +24,10 @@ export class CreateDoctorProfileDto {
   @IsString()
   @IsNotEmpty()
   availability: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isAvailable?: boolean;
 
   @IsString()
   @IsOptional()
@@ -56,6 +60,10 @@ export class UpdateDoctorProfileDto {
   @IsString()
   @IsOptional()
   availability?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isAvailable?: boolean;
 
   @IsString()
   @IsOptional()
