@@ -9,17 +9,23 @@ export interface JwtPayload {
   role: Role;
 }
 
+import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+  private readonly logger = new Logger('JwtStrategy');
+
+  constructor(private readonly configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET ?? 'dev-secret',
+      secretOrKey: configService.get<string>('JWT_SECRET'),
     });
   }
 
   validate(payload: JwtPayload) {
+    this.logger.debug(`Validating payload: ${JSON.stringify(payload)}`);
     return {
       userId: payload.sub,
       email: payload.email,
