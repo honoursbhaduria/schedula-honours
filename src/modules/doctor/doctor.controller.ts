@@ -1,15 +1,22 @@
-import { Controller, Get, Post, Patch, Body, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Req, UseGuards, Query, Param, ParseIntPipe } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Role } from '../auth/roles.enum';
 import { DoctorService } from './doctor.service';
 import { CreateDoctorProfileDto, UpdateDoctorProfileDto } from './dto/doctor-profile.dto';
+import { DoctorQueryDto } from './dto/doctor-query.dto';
 
 @Controller('doctor')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class DoctorController {
   constructor(private readonly doctorService: DoctorService) {}
+
+  @Get()
+  @Roles(Role.PATIENT, Role.DOCTOR)
+  async findAll(@Query() query: DoctorQueryDto) {
+    return this.doctorService.findAllDoctors(query);
+  }
 
   @Post('profile')
   @Roles(Role.DOCTOR)
@@ -27,5 +34,11 @@ export class DoctorController {
   @Roles(Role.DOCTOR)
   async updateProfile(@Req() req: any, @Body() dto: UpdateDoctorProfileDto) {
     return this.doctorService.updateProfile(req.user.userId, dto);
+  }
+
+  @Get(':id')
+  @Roles(Role.PATIENT, Role.DOCTOR)
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.doctorService.findDoctorById(id);
   }
 }

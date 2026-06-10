@@ -27,6 +27,9 @@ export class DoctorProfile {
   @Column({ type: 'text', nullable: true })
   profileDetails: string;
 
+  @Column({ default: true })
+  isAvailable: boolean;
+
   @OneToOne(() => User, (user) => user.doctorProfile)
   @JoinColumn()
   user: User;
