@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { DoctorModule } from './modules/doctor/doctor.module';
 import { PatientModule } from './modules/patient/patient.module';
+import { AiRecommendationModule } from './modules/ai-recommendation/ai-recommendation.module';
 import { RoleController } from './modules/role.controller';
 import { User } from './modules/users/entities/user.entity';
 import { DoctorProfile } from './modules/users/entities/doctor-profile.entity';
@@ -24,25 +25,31 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_NAME'),
-        entities: [User, DoctorProfile, PatientProfile],
-        synchronize: false,
-        logging: true,
-        migrations: ['dist/migrations/*.js'],
-        migrationsRun: true,
-      }),
+      useFactory: (configService: ConfigService) => {
+        const databaseUrl = configService.get<string>('DATABASE_URL');
+        return {
+          type: 'postgres',
+          url: databaseUrl,
+          host: !databaseUrl ? configService.get<string>('DB_HOST') : undefined,
+          port: !databaseUrl ? configService.get<number>('DB_PORT') : undefined,
+          username: !databaseUrl ? configService.get<string>('DB_USERNAME') : undefined,
+          password: !databaseUrl ? configService.get<string>('DB_PASSWORD') : undefined,
+          database: !databaseUrl ? configService.get<string>('DB_NAME') : undefined,
+          entities: [User, DoctorProfile, PatientProfile],
+          synchronize: false,
+          logging: true,
+          migrations: ['dist/migrations/*.js'],
+          migrationsRun: true,
+          ssl: databaseUrl ? { rejectUnauthorized: false } : false,
+        };
+      },
       inject: [ConfigService],
     }),
     AuthModule,
     UsersModule,
     DoctorModule,
     PatientModule,
+    AiRecommendationModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
