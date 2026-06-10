@@ -17,10 +17,7 @@ export class AiRecommendationService {
       throw new Error('GEMINI_API_KEY is not defined in environment variables');
     }
     this.genAI = new GoogleGenerativeAI(apiKey);
-    // Using gemini-1.5-flash as 2.5-flash might not be the exact identifier in the SDK yet, 
-    // but the user specified gemini-2.5-flash. I will use the most capable flash model available or the one specified if it works.
-    // Actually, gemini-1.5-flash is common. I'll try to use the one provided or fall back.
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   }
 
   async recommendDoctor(file: Express.Multer.File) {
