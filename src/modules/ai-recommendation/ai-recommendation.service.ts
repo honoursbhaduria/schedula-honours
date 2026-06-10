@@ -21,7 +21,17 @@ export class AiRecommendationService {
   }
 
   async recommendDoctor(file: Express.Multer.File) {
+    console.log('Received file for AI analysis:', {
+      filename: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    });
+
     try {
+      if (!file || !file.buffer) {
+        throw new Error('File buffer is missing');
+      }
+
       const prompt = `
         Analyze this medical report and provide the following in JSON format:
         {
@@ -33,6 +43,7 @@ export class AiRecommendationService {
         Only return the JSON.
       `;
 
+      console.log('Calling Gemini AI...');
       const result = await this.model.generateContent([
         prompt,
         {
@@ -45,17 +56,19 @@ export class AiRecommendationService {
 
       const response = await result.response;
       const text = response.text();
+      console.log('AI Raw Response:', text);
       
       // Find the first occurrence of '{' and the last occurrence of '}'
       const jsonStartIndex = text.indexOf('{');
       const jsonEndIndex = text.lastIndexOf('}');
       
       if (jsonStartIndex === -1 || jsonEndIndex === -1) {
-        throw new Error('Failed to find JSON in AI response');
+        throw new Error(`Failed to find JSON in AI response. Raw text: ${text}`);
       }
 
       const jsonString = text.substring(jsonStartIndex, jsonEndIndex + 1);
       const aiAnalysis = JSON.parse(jsonString);
+      console.log('AI Parsed Analysis:', aiAnalysis);
 
       // Search for doctors based on the specialist type
       const doctors = await this.doctorService.findAllDoctors({
@@ -68,8 +81,8 @@ export class AiRecommendationService {
         recommendedDoctors: doctors.data,
       };
     } catch (error) {
-      console.error('AI Recommendation Error:', error);
-      throw new InternalServerErrorException('Failed to process report with AI');
+      console.error('DETAILED AI ERROR:', error);
+      throw new InternalServerErrorException(`AI Processing Error: ${error.message}`);
     }
   }
 }
