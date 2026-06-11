@@ -2,6 +2,8 @@ import { DataSource } from 'typeorm';
 import { User } from '../modules/users/entities/user.entity';
 import { DoctorProfile } from '../modules/users/entities/doctor-profile.entity';
 import { PatientProfile } from '../modules/users/entities/patient-profile.entity';
+import { RecurringAvailability } from '../modules/doctor/entities/recurring-availability.entity';
+import { CustomAvailability } from '../modules/doctor/entities/custom-availability.entity';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -18,7 +20,13 @@ export const AppDataSource = new DataSource({
   database: !databaseUrl ? process.env.DB_NAME : undefined,
   synchronize: false,
   logging: true,
-  entities: [User, DoctorProfile, PatientProfile],
+  entities: [
+    User,
+    DoctorProfile,
+    PatientProfile,
+    RecurringAvailability,
+    CustomAvailability,
+  ],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],
   ssl: databaseUrl ? { rejectUnauthorized: false } : false,

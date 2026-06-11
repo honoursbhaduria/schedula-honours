@@ -1,8 +1,15 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PatientProfile } from '../users/entities/patient-profile.entity';
-import { CreatePatientProfileDto, UpdatePatientProfileDto } from './dto/patient-profile.dto';
+import {
+  CreatePatientProfileDto,
+  UpdatePatientProfileDto,
+} from './dto/patient-profile.dto';
 
 @Injectable()
 export class PatientService {
@@ -11,8 +18,13 @@ export class PatientService {
     private readonly patientProfileRepository: Repository<PatientProfile>,
   ) {}
 
-  async createProfile(userId: number, dto: CreatePatientProfileDto): Promise<PatientProfile> {
-    const existing = await this.patientProfileRepository.findOne({ where: { userId } });
+  async createProfile(
+    userId: number,
+    dto: CreatePatientProfileDto,
+  ): Promise<PatientProfile> {
+    const existing = await this.patientProfileRepository.findOne({
+      where: { userId },
+    });
     if (existing) {
       throw new ConflictException('Patient profile already exists');
     }
@@ -25,9 +37,9 @@ export class PatientService {
   }
 
   async getProfile(userId: number): Promise<any> {
-    const profile = await this.patientProfileRepository.findOne({ 
+    const profile = await this.patientProfileRepository.findOne({
       where: { userId },
-      relations: { user: true }
+      relations: { user: true },
     });
 
     if (!profile) {
@@ -47,8 +59,13 @@ export class PatientService {
     };
   }
 
-  async updateProfile(userId: number, dto: UpdatePatientProfileDto): Promise<any> {
-    const profile = await this.patientProfileRepository.findOne({ where: { userId } });
+  async updateProfile(
+    userId: number,
+    dto: UpdatePatientProfileDto,
+  ): Promise<any> {
+    const profile = await this.patientProfileRepository.findOne({
+      where: { userId },
+    });
     if (!profile) {
       throw new NotFoundException('Patient profile not found');
     }

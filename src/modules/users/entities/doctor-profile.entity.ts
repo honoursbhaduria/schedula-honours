@@ -1,5 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { User } from './user.entity';
+import { RecurringAvailability } from '../../doctor/entities/recurring-availability.entity';
+import { CustomAvailability } from '../../doctor/entities/custom-availability.entity';
 
 @Entity('doctor_profiles')
 export class DoctorProfile {
@@ -36,4 +45,10 @@ export class DoctorProfile {
 
   @Column()
   userId: number;
+
+  @OneToMany(() => RecurringAvailability, (availability) => availability.doctor)
+  recurringAvailabilities: RecurringAvailability[];
+
+  @OneToMany(() => CustomAvailability, (availability) => availability.doctor)
+  customAvailabilities: CustomAvailability[];
 }
