@@ -19,7 +19,6 @@ import { DoctorAvailabilityService } from './doctor-availability.service';
 import {
   CreateRecurringAvailabilityDto,
   UpdateRecurringAvailabilityDto,
-  CreateCustomAvailabilityOverrideDto,
 } from './dto/availability.dto';
 
 interface RequestWithUser {
@@ -75,12 +74,13 @@ export class DoctorAvailabilityController {
   @Roles(Role.DOCTOR)
   async createOverride(
     @Req() req: RequestWithUser,
-    @Body() dto: CreateCustomAvailabilityOverrideDto,
+    @Body() body: any,
   ) {
-    const slots = dto.slots || [];
+    // Manually handling to bypass whitelisting issues with nested DTOs
+    const { date, slots } = body;
     return this.availabilityService.createOverride(req.user.userId, {
-      ...dto,
-      slots,
+      date,
+      slots: slots || [],
     });
   }
 
