@@ -77,7 +77,11 @@ export class DoctorAvailabilityController {
     @Req() req: RequestWithUser,
     @Body() dto: CreateCustomAvailabilityOverrideDto,
   ) {
-    return this.availabilityService.createOverride(req.user.userId, dto);
+    const slots = dto.slots || [];
+    return this.availabilityService.createOverride(req.user.userId, {
+      ...dto,
+      slots,
+    });
   }
 
   @Get('date')
