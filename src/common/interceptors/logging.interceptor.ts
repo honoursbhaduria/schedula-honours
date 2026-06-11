@@ -23,9 +23,7 @@ export class LoggingInterceptor implements NestInterceptor {
           const response = context.switchToHttp().getResponse();
           const statusCode = response.statusCode;
           const delay = Date.now() - now;
-          this.logger.log(
-            `${method} ${url} ${statusCode} +${delay}ms`,
-          );
+          this.logger.log(`${method} ${url} ${statusCode} +${delay}ms`);
           // Log payload for debugging
           this.logger.debug(`Request Body: ${JSON.stringify(body)}`);
           this.logger.debug(`Request Headers: ${JSON.stringify(headers)}`);

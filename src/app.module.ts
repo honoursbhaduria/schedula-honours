@@ -32,9 +32,15 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
           url: databaseUrl,
           host: !databaseUrl ? configService.get<string>('DB_HOST') : undefined,
           port: !databaseUrl ? configService.get<number>('DB_PORT') : undefined,
-          username: !databaseUrl ? configService.get<string>('DB_USERNAME') : undefined,
-          password: !databaseUrl ? configService.get<string>('DB_PASSWORD') : undefined,
-          database: !databaseUrl ? configService.get<string>('DB_NAME') : undefined,
+          username: !databaseUrl
+            ? configService.get<string>('DB_USERNAME')
+            : undefined,
+          password: !databaseUrl
+            ? configService.get<string>('DB_PASSWORD')
+            : undefined,
+          database: !databaseUrl
+            ? configService.get<string>('DB_NAME')
+            : undefined,
           entities: [User, DoctorProfile, PatientProfile],
           synchronize: false,
           logging: true,
@@ -57,10 +63,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
       },
     ]),
   ],
-  controllers: [
-    AppController,
-    RoleController,
-  ],
+  controllers: [AppController, RoleController],
   providers: [
     AppService,
     {

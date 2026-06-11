@@ -1,10 +1,24 @@
-import { Controller, Get, Post, Patch, Body, Req, UseGuards, Query, Param, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Req,
+  UseGuards,
+  Query,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Role } from '../auth/roles.enum';
 import { DoctorService } from './doctor.service';
-import { CreateDoctorProfileDto, UpdateDoctorProfileDto } from './dto/doctor-profile.dto';
+import {
+  CreateDoctorProfileDto,
+  UpdateDoctorProfileDto,
+} from './dto/doctor-profile.dto';
 import { DoctorQueryDto } from './dto/doctor-query.dto';
 
 @Controller('doctor')

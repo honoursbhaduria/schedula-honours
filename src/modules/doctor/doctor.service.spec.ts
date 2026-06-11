@@ -52,8 +52,10 @@ describe('DoctorService', () => {
     }).compile();
 
     service = module.get<DoctorService>(DoctorService);
-    repository = module.get<Repository<DoctorProfile>>(getRepositoryToken(DoctorProfile));
-    
+    repository = module.get<Repository<DoctorProfile>>(
+      getRepositoryToken(DoctorProfile),
+    );
+
     // Reset all mocks
     jest.clearAllMocks();
   });
@@ -77,24 +79,32 @@ describe('DoctorService', () => {
 
     it('should apply strict availability filter', async () => {
       await service.findAllDoctors({ availability: 'true' });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('doctor.isAvailable = :isAvailable', { isAvailable: true });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'doctor.isAvailable = :isAvailable',
+        { isAvailable: true },
+      );
     });
 
     it('should apply strict specialization filter', async () => {
       await service.findAllDoctors({ specialization: 'Cardiology' });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('doctor.specialization ILIKE :spec', { spec: '%Cardiology%' });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'doctor.specialization ILIKE :spec',
+        { spec: '%Cardiology%' },
+      );
     });
 
     it('should apply advanced fuzzy search and ranking when search query is provided', async () => {
       await service.findAllDoctors({ search: 'hono' });
 
       // Verify Brackets was used for fuzzy logic
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(expect.any(Brackets));
-      
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.any(Brackets),
+      );
+
       // Verify similarity select for ranking
       expect(mockQueryBuilder.addSelect).toHaveBeenCalledWith(
         'similarity(doctor.fullName, :search)',
-        'score'
+        'score',
       );
       expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('score', 'DESC');
     });
@@ -116,7 +126,9 @@ describe('DoctorService', () => {
 
     it('should throw NotFoundException if doctor does not exist', async () => {
       mockRepository.findOne.mockResolvedValue(null);
-      await expect(service.findDoctorById(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findDoctorById(999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -132,7 +144,9 @@ describe('DoctorService', () => {
 
     it('should throw ConflictException if profile already exists', async () => {
       mockRepository.findOne.mockResolvedValue(mockDoctorProfile);
-      await expect(service.createProfile(1, {} as any)).rejects.toThrow(ConflictException);
+      await expect(service.createProfile(1, {} as any)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 });
