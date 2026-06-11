@@ -16,7 +16,7 @@ import { DoctorAvailabilityService } from './doctor-availability.service';
       CustomAvailability,
     ]),
   ],
-  controllers: [DoctorController, DoctorAvailabilityController],
+  controllers: [DoctorAvailabilityController, DoctorController],
   providers: [DoctorService, DoctorAvailabilityService],
   exports: [DoctorService, DoctorAvailabilityService],
 })
