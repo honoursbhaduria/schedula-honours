@@ -6,16 +6,20 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
+const databaseUrl = process.env.DATABASE_URL;
+
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || '5432'),
-  username: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  url: databaseUrl,
+  host: !databaseUrl ? process.env.DB_HOST : undefined,
+  port: !databaseUrl ? parseInt(process.env.DB_PORT || '5432') : undefined,
+  username: !databaseUrl ? process.env.DB_USERNAME : undefined,
+  password: !databaseUrl ? process.env.DB_PASSWORD : undefined,
+  database: !databaseUrl ? process.env.DB_NAME : undefined,
   synchronize: false,
   logging: true,
   entities: [User, DoctorProfile, PatientProfile],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],
+  ssl: databaseUrl ? { rejectUnauthorized: false } : false,
 });
