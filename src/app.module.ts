@@ -14,6 +14,8 @@ import { RoleController } from './modules/role.controller';
 import { User } from './modules/users/entities/user.entity';
 import { DoctorProfile } from './modules/users/entities/doctor-profile.entity';
 import { PatientProfile } from './modules/users/entities/patient-profile.entity';
+import { RecurringAvailability } from './modules/doctor/entities/recurring-availability.entity';
+import { CustomAvailability } from './modules/doctor/entities/custom-availability.entity';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -41,7 +43,13 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
           database: !databaseUrl
             ? configService.get<string>('DB_NAME')
             : undefined,
-          entities: [User, DoctorProfile, PatientProfile],
+          entities: [
+            User,
+            DoctorProfile,
+            PatientProfile,
+            RecurringAvailability,
+            CustomAvailability,
+          ],
           synchronize: false,
           logging: true,
           migrations: ['dist/migrations/*.js'],
