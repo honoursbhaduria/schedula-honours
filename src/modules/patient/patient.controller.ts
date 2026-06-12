@@ -1,10 +1,21 @@
-import { Controller, Get, Post, Patch, Body, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Role } from '../auth/roles.enum';
 import { PatientService } from './patient.service';
-import { CreatePatientProfileDto, UpdatePatientProfileDto } from './dto/patient-profile.dto';
+import {
+  CreatePatientProfileDto,
+  UpdatePatientProfileDto,
+} from './dto/patient-profile.dto';
 
 @Controller('patient')
 @UseGuards(JwtAuthGuard, RolesGuard)

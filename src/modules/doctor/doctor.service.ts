@@ -1,8 +1,15 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Brackets } from 'typeorm';
 import { DoctorProfile } from '../users/entities/doctor-profile.entity';
-import { CreateDoctorProfileDto, UpdateDoctorProfileDto } from './dto/doctor-profile.dto';
+import {
+  CreateDoctorProfileDto,
+  UpdateDoctorProfileDto,
+} from './dto/doctor-profile.dto';
 import { DoctorQueryDto } from './dto/doctor-query.dto';
 
 @Injectable()
@@ -17,14 +24,21 @@ export class DoctorService {
    * Handles pagination, strict filtering, and typo-tolerant search.
    */
   async findAllDoctors(query: DoctorQueryDto) {
-    const { search, specialization, availability, page = 1, limit = 10 } = query;
+    const {
+      search,
+      specialization,
+      availability,
+      page = 1,
+      limit = 10,
+    } = query;
 
     // Sanitize and validate pagination inputs
     const pageNum = Math.max(1, Number(page));
     const limitNum = Math.max(1, Math.min(100, Number(limit)));
     const skip = (pageNum - 1) * limitNum;
 
-    const queryBuilder = this.doctorProfileRepository.createQueryBuilder('doctor');
+    const queryBuilder =
+      this.doctorProfileRepository.createQueryBuilder('doctor');
 
     // 1. Core Selection (Lean DTO for listing)
     queryBuilder.select([
@@ -39,12 +53,16 @@ export class DoctorService {
     // 2. Strict Filter: Availability
     if (availability !== undefined) {
       const isAvailable = availability === 'true';
-      queryBuilder.andWhere('doctor.isAvailable = :isAvailable', { isAvailable });
+      queryBuilder.andWhere('doctor.isAvailable = :isAvailable', {
+        isAvailable,
+      });
     }
 
     // 3. Strict Filter: Specialization
     if (specialization) {
-      queryBuilder.andWhere('doctor.specialization ILIKE :spec', { spec: `%${specialization}%` });
+      queryBuilder.andWhere('doctor.specialization ILIKE :spec', {
+        spec: `%${specialization}%`,
+      });
     }
 
     // 4. Advanced Fuzzy Search with Relevance Ranking
@@ -100,8 +118,13 @@ export class DoctorService {
     return doctor;
   }
 
-  async createProfile(userId: number, dto: CreateDoctorProfileDto): Promise<DoctorProfile> {
-    const existing = await this.doctorProfileRepository.findOne({ where: { userId } });
+  async createProfile(
+    userId: number,
+    dto: CreateDoctorProfileDto,
+  ): Promise<DoctorProfile> {
+    const existing = await this.doctorProfileRepository.findOne({
+      where: { userId },
+    });
     if (existing) {
       throw new ConflictException('Doctor profile already exists');
     }
@@ -138,8 +161,13 @@ export class DoctorService {
     };
   }
 
-  async updateProfile(userId: number, dto: UpdateDoctorProfileDto): Promise<any> {
-    const profile = await this.doctorProfileRepository.findOne({ where: { userId } });
+  async updateProfile(
+    userId: number,
+    dto: UpdateDoctorProfileDto,
+  ): Promise<any> {
+    const profile = await this.doctorProfileRepository.findOne({
+      where: { userId },
+    });
     if (!profile) {
       throw new NotFoundException('Doctor profile not found');
     }

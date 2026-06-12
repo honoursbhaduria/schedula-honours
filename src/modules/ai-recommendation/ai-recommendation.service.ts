@@ -57,13 +57,15 @@ export class AiRecommendationService {
       const response = await result.response;
       const text = response.text();
       console.log('AI Raw Response:', text);
-      
+
       // Find the first occurrence of '{' and the last occurrence of '}'
       const jsonStartIndex = text.indexOf('{');
       const jsonEndIndex = text.lastIndexOf('}');
-      
+
       if (jsonStartIndex === -1 || jsonEndIndex === -1) {
-        throw new Error(`Failed to find JSON in AI response. Raw text: ${text}`);
+        throw new Error(
+          `Failed to find JSON in AI response. Raw text: ${text}`,
+        );
       }
 
       const jsonString = text.substring(jsonStartIndex, jsonEndIndex + 1);
@@ -82,7 +84,9 @@ export class AiRecommendationService {
       };
     } catch (error) {
       console.error('DETAILED AI ERROR:', error);
-      throw new InternalServerErrorException(`AI Processing Error: ${error.message}`);
+      throw new InternalServerErrorException(
+        `AI Processing Error: ${error.message}`,
+      );
     }
   }
 }

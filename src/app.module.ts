@@ -14,6 +14,8 @@ import { RoleController } from './modules/role.controller';
 import { User } from './modules/users/entities/user.entity';
 import { DoctorProfile } from './modules/users/entities/doctor-profile.entity';
 import { PatientProfile } from './modules/users/entities/patient-profile.entity';
+import { RecurringAvailability } from './modules/doctor/entities/recurring-availability.entity';
+import { CustomAvailability } from './modules/doctor/entities/custom-availability.entity';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -32,10 +34,22 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
           url: databaseUrl,
           host: !databaseUrl ? configService.get<string>('DB_HOST') : undefined,
           port: !databaseUrl ? configService.get<number>('DB_PORT') : undefined,
-          username: !databaseUrl ? configService.get<string>('DB_USERNAME') : undefined,
-          password: !databaseUrl ? configService.get<string>('DB_PASSWORD') : undefined,
-          database: !databaseUrl ? configService.get<string>('DB_NAME') : undefined,
-          entities: [User, DoctorProfile, PatientProfile],
+          username: !databaseUrl
+            ? configService.get<string>('DB_USERNAME')
+            : undefined,
+          password: !databaseUrl
+            ? configService.get<string>('DB_PASSWORD')
+            : undefined,
+          database: !databaseUrl
+            ? configService.get<string>('DB_NAME')
+            : undefined,
+          entities: [
+            User,
+            DoctorProfile,
+            PatientProfile,
+            RecurringAvailability,
+            CustomAvailability,
+          ],
           synchronize: false,
           logging: true,
           migrations: ['dist/migrations/*.js'],
@@ -57,10 +71,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
       },
     ]),
   ],
-  controllers: [
-    AppController,
-    RoleController,
-  ],
+  controllers: [AppController, RoleController],
   providers: [
     AppService,
     {

@@ -15,7 +15,9 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @Controller('ai')
 @UseGuards(JwtAuthGuard)
 export class AiRecommendationController {
-  constructor(private readonly aiRecommendationService: AiRecommendationService) {}
+  constructor(
+    private readonly aiRecommendationService: AiRecommendationService,
+  ) {}
 
   @Post('recommend-doctor')
   @UseInterceptors(FileInterceptor('report'))
