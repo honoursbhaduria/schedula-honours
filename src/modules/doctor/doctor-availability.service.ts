@@ -255,7 +255,8 @@ export class DoctorAvailabilityService {
       'FRIDAY',
       'SATURDAY',
     ];
-    const dayOfWeek = days[date.getDay()] as DayOfWeek;
+    // Use UTC methods because new Date('YYYY-MM-DD') is parsed as UTC
+    const dayOfWeek = days[date.getUTCDay()] as DayOfWeek;
 
     return this.recurringRepo.find({
       where: { doctorId, dayOfWeek },
@@ -286,12 +287,10 @@ export class DoctorAvailabilityService {
       throw new BadRequestException('Invalid date format. Expected YYYY-MM-DD.');
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const queryDate = new Date(dateString);
-    queryDate.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD in server local time
 
-    if (queryDate < today) {
+    if (dateString < todayStr) {
       throw new BadRequestException('Cannot fetch slots for past dates');
     }
 
@@ -313,8 +312,7 @@ export class DoctorAvailabilityService {
     let potentialSlots = this.generateSlotsFromRanges(availability, duration);
 
     // Filter past slots if today
-    if (dateString === today.toISOString().split('T')[0]) {
-      const now = new Date();
+    if (dateString === todayStr) {
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
       potentialSlots = potentialSlots.filter(
         (slot) => this.timeToMinutes(slot.startTime) > currentMinutes,
