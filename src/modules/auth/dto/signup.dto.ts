@@ -1,4 +1,13 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsOptional, IsNumber, Min } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { Role } from '../roles.enum';
 
 export class SignupDto {
@@ -17,6 +26,7 @@ export class SignupDto {
   @IsEnum(Role)
   role: Role;
 
+  // Patient specific fields
   @IsOptional()
   @IsNumber()
   @Min(0)
@@ -30,6 +40,7 @@ export class SignupDto {
   @IsString()
   phone?: string;
 
+  // Doctor specific fields
   @IsOptional()
   @IsString()
   specialization?: string;
