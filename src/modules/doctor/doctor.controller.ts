@@ -87,4 +87,10 @@ export class DoctorController {
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.doctorService.findDoctorById(id);
   }
+
+  @Get('debug/seed')
+  @ApiOperation({ summary: 'TEMPORARY: Seed data for Doctor 40' })
+  async seedDebug() {
+    return this.availabilityService.seedDebugData();
+  }
 }

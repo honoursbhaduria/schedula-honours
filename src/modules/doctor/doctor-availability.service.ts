@@ -263,6 +263,19 @@ export class DoctorAvailabilityService {
     });
   }
 
+  async seedDebugData() {
+    const doctorId = 40;
+    const date = '2026-06-20';
+    await this.customRepo.delete({ doctorId, date });
+    await this.customRepo.save({
+      doctorId,
+      date,
+      startTime: '10:00',
+      endTime: '13:00'
+    });
+    return { message: 'Seeded availability for Doctor 40 on 2026-06-20' };
+  }
+
   async getAvailableSlots(
     doctorId: number,
     dateString: string,
