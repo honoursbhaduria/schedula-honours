@@ -7,7 +7,6 @@ import { RecurringAvailability } from './entities/recurring-availability.entity'
 import { CustomAvailability } from './entities/custom-availability.entity';
 import { DoctorAvailabilityController } from './doctor-availability.controller';
 import { DoctorAvailabilityService } from './doctor-availability.service';
-import { AppointmentModule } from '../appointments/appointments.module';
 
 @Module({
   imports: [
@@ -16,7 +15,6 @@ import { AppointmentModule } from '../appointments/appointments.module';
       RecurringAvailability,
       CustomAvailability,
     ]),
-    AppointmentModule,
   ],
   controllers: [DoctorAvailabilityController, DoctorController],
   providers: [DoctorService, DoctorAvailabilityService],

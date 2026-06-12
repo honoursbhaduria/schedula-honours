@@ -15,7 +15,6 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Role } from '../auth/roles.enum';
 import { DoctorService } from './doctor.service';
-import { DoctorAvailabilityService } from './doctor-availability.service';
 import {
   CreateDoctorProfileDto,
   UpdateDoctorProfileDto,
@@ -25,10 +24,7 @@ import { DoctorQueryDto } from './dto/doctor-query.dto';
 @Controller('doctor')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class DoctorController {
-  constructor(
-    private readonly doctorService: DoctorService,
-    private readonly availabilityService: DoctorAvailabilityService,
-  ) {}
+  constructor(private readonly doctorService: DoctorService) {}
 
   @Get()
   @Roles(Role.PATIENT, Role.DOCTOR)
@@ -52,16 +48,6 @@ export class DoctorController {
   @Roles(Role.DOCTOR)
   async updateProfile(@Req() req: any, @Body() dto: UpdateDoctorProfileDto) {
     return this.doctorService.updateProfile(req.user.userId, dto);
-  }
-
-  @Get(':id/slots')
-  @Roles(Role.PATIENT, Role.DOCTOR)
-  async getSlots(
-    @Param('id', ParseIntPipe) id: number,
-    @Query('date') date: string,
-    @Query('duration') duration?: number,
-  ) {
-    return this.availabilityService.getAvailableSlots(id, date, duration);
   }
 
   @Get(':id')
