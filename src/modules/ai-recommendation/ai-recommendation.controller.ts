@@ -3,10 +3,10 @@ import {
   Post,
   UseInterceptors,
   UploadedFile,
+  UseGuards,
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
-  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AiRecommendationService } from './ai-recommendation.service';
@@ -15,9 +15,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @Controller('ai')
 @UseGuards(JwtAuthGuard)
 export class AiRecommendationController {
-  constructor(
-    private readonly aiRecommendationService: AiRecommendationService,
-  ) {}
+  constructor(private readonly aiRecommendationService: AiRecommendationService) {}
 
   @Post('recommend-doctor')
   @UseInterceptors(FileInterceptor('report'))

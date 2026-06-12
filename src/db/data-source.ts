@@ -4,6 +4,7 @@ import { DoctorProfile } from '../modules/users/entities/doctor-profile.entity';
 import { PatientProfile } from '../modules/users/entities/patient-profile.entity';
 import { RecurringAvailability } from '../modules/doctor/entities/recurring-availability.entity';
 import { CustomAvailability } from '../modules/doctor/entities/custom-availability.entity';
+import { Appointment } from '../modules/appointments/entities/appointment.entity';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -26,6 +27,7 @@ export const AppDataSource = new DataSource({
     PatientProfile,
     RecurringAvailability,
     CustomAvailability,
+    Appointment,
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],
