@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { DoctorModule } from './modules/doctor/doctor.module';
+import { PatientModule } from './modules/patient/patient.module';
 import { AiRecommendationModule } from './modules/ai-recommendation/ai-recommendation.module';
 import { AppointmentModule } from './modules/appointments/appointments.module';
 import { User } from './modules/users/entities/user.entity';
@@ -42,6 +43,7 @@ import { Appointment } from './modules/appointments/entities/appointment.entity'
     AuthModule,
     UsersModule,
     DoctorModule,
+    PatientModule,
     AiRecommendationModule,
     AppointmentModule,
   ],
