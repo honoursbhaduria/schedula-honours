@@ -36,7 +36,7 @@ export class AiRecommendationService {
         Analyze this medical report and provide the following in JSON format:
         {
           "condition": "Brief description of the medical condition",
-          "specialistType": "The type of medical specialist needed (e.g., Cardiologist, Dermatologist, General Physician, etc.)",
+          "specialistType": "A comma-separated list of EXACT medical specialist titles ONLY (e.g. 'Endocrinologist, Hematologist, General Physician'). Do not include explanations.",
           "summary": "A professional summary of the report for the patient",
           "preMedicine": "Safe, over-the-counter pre-medicine or first-aid advice that the patient can take before seeing a doctor. If none are safe, state that."
         }
@@ -68,11 +68,17 @@ export class AiRecommendationService {
       const aiAnalysis = JSON.parse(jsonString);
       console.log('AI Parsed Analysis:', aiAnalysis);
 
-      // Improved Recommendation Logic: Split comma-separated specialists and search for each
+      // Improved Recommendation Logic: Clean the specialist string and search
       const specialistSuggestions = aiAnalysis.specialistType
+        .replace(/\([^)]*\)/g, '') // Remove everything in parentheses
         .split(/[,\/]/)
-        .map((s: string) => s.trim())
-        .filter((s: string) => s.length > 0);
+        .map((s: string) => 
+          s.replace(/and potentially an|or potentially an|and|or|potentially/gi, '') // Remove filler words
+           .trim()
+        )
+        .filter((s: string) => s.length > 2); // Ignore very short/empty strings
+
+      console.log('Extracted specialist keywords for search:', specialistSuggestions);
 
       let recommendedDoctors: any[] = [];
 
