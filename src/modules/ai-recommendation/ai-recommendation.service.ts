@@ -68,14 +68,36 @@ export class AiRecommendationService {
       const aiAnalysis = JSON.parse(jsonString);
       console.log('AI Parsed Analysis:', aiAnalysis);
 
-      const doctors = await this.doctorService.findAllDoctors({
-        specialization: aiAnalysis.specialistType,
-        availability: 'true',
-      });
+      // Improved Recommendation Logic: Split comma-separated specialists and search for each
+      const specialistSuggestions = aiAnalysis.specialistType
+        .split(/[,\/]/)
+        .map((s: string) => s.trim())
+        .filter((s: string) => s.length > 0);
+
+      let recommendedDoctors: any[] = [];
+
+      // We search for the first few suggested specializations to find matching doctors
+      for (const spec of specialistSuggestions) {
+        const result = await this.doctorService.findAllDoctors({
+          specialization: spec,
+          availability: 'true',
+          limit: 5,
+        });
+        if (result.data && result.data.length > 0) {
+          recommendedDoctors = [...recommendedDoctors, ...result.data];
+        }
+        // If we found enough doctors, stop searching
+        if (recommendedDoctors.length >= 10) break;
+      }
+
+      // Deduplicate by ID
+      const uniqueDoctors = Array.from(
+        new Map(recommendedDoctors.map((d) => [d.id, d])).values(),
+      );
 
       return {
         analysis: aiAnalysis,
-        recommendedDoctors: doctors.data,
+        recommendedDoctors: uniqueDoctors,
       };
     } catch (error) {
       console.error('DETAILED AI ERROR:', error);
