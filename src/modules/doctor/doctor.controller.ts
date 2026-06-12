@@ -23,7 +23,7 @@ import {
 } from './dto/doctor-profile.dto';
 import { DoctorQueryDto } from './dto/doctor-query.dto';
 
-@ApiTags('Doctor Management')
+@ApiTags('2. Doctor Flow (Profile & Slots)')
 @ApiBearerAuth()
 @Controller('doctor')
 @UseGuards(JwtAuthGuard, RolesGuard)

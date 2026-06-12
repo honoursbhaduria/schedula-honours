@@ -13,7 +13,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AiRecommendationService } from './ai-recommendation.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@ApiTags('AI Recommendation')
+@ApiTags('5. Patient Flow (AI Recommendation)')
 @ApiBearerAuth()
 @Controller('ai')
 @UseGuards(JwtAuthGuard)

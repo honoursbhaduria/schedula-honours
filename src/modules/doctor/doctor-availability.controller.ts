@@ -31,7 +31,7 @@ interface RequestWithUser {
   };
 }
 
-@ApiTags('Doctor Availability')
+@ApiTags('3. Doctor Flow (Availability Management)')
 @ApiBearerAuth()
 @Controller('doctor/availability')
 @UseGuards(JwtAuthGuard, RolesGuard)

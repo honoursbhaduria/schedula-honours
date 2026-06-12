@@ -18,7 +18,7 @@ import {
   UpdatePatientProfileDto,
 } from './dto/patient-profile.dto';
 
-@ApiTags('Patient Management')
+@ApiTags('4. Patient Flow (Profile Management)')
 @ApiBearerAuth()
 @Controller('patient')
 @UseGuards(JwtAuthGuard, RolesGuard)

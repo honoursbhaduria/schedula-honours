@@ -56,13 +56,19 @@ export class CustomSlotDto {
 }
 
 export class CreateCustomAvailabilityOverrideDto {
-  @ApiProperty({ example: '2026-06-20', description: 'Format: YYYY-MM-DD' })
+  @ApiProperty({ example: '2026-06-25', description: 'Date for override (YYYY-MM-DD)' })
   @IsString()
   @IsNotEmpty()
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'date must be in YYYY-MM-DD format' })
   date: string;
 
-  @ApiProperty({ type: [CustomSlotDto] })
+  @ApiProperty({ 
+    type: [CustomSlotDto],
+    example: [
+      { startTime: '10:00', endTime: '12:00' },
+      { startTime: '14:00', endTime: '17:00' }
+    ]
+  })
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
