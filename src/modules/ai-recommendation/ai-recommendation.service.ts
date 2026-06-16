@@ -1,102 +1,177 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import {
+  HumanMessage,
+  SystemMessage,
+  ToolMessage,
+} from '@langchain/core/messages';
+import { DynamicStructuredTool } from '@langchain/core/tools';
+import { z } from 'zod';
 import { DoctorService } from '../doctor/doctor.service';
+import { AppointmentsService } from '../appointments/appointments.service';
+import { DoctorAvailabilityService } from '../doctor/doctor-availability.service';
+import { PatientService } from '../patient/patient.service';
+import { AiChatDto } from './dto/ai-chat.dto';
 
 @Injectable()
 export class AiRecommendationService {
-  private genAI: GoogleGenerativeAI;
-  private model: GenerativeModel;
+  private readonly logger = new Logger(AiRecommendationService.name);
+  private model: ChatGoogleGenerativeAI;
+  private visionModel: ChatGoogleGenerativeAI;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly doctorService: DoctorService,
+    private readonly appointmentsService: AppointmentsService,
+    private readonly availabilityService: DoctorAvailabilityService,
+    private readonly patientService: PatientService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
-      throw new Error('GEMINI_API_KEY is not defined in environment variables');
+      throw new Error('GEMINI_API_KEY is not defined');
     }
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    this.model = new ChatGoogleGenerativeAI({
+      apiKey,
+      model: 'gemini-1.5-flash',
+      temperature: 0,
+    });
+
+    this.visionModel = new ChatGoogleGenerativeAI({
+      apiKey,
+      model: 'gemini-1.5-flash',
+      temperature: 0,
+    });
+  }
+
+  private getTools(userId: number) {
+    return [
+      new DynamicStructuredTool({
+        name: 'get_available_slots',
+        description:
+          'Get available appointment slots for a doctor on a specific date.',
+        schema: z.object({
+          doctorId: z.number().describe('The ID of the doctor'),
+          date: z.string().describe('The date in YYYY-MM-DD format'),
+        }),
+        func: async ({ doctorId, date }) => {
+          const slots = await this.availabilityService.getAvailableSlots(
+            doctorId,
+            date,
+          );
+          return JSON.stringify(slots);
+        },
+      }),
+      new DynamicStructuredTool({
+        name: 'book_appointment',
+        description: 'Book an appointment for the patient with a doctor.',
+        schema: z.object({
+          doctorId: z.number().describe('The ID of the doctor'),
+          date: z.string().describe('The date in YYYY-MM-DD format'),
+          startTime: z.string().describe('Start time in HH:MM format'),
+          endTime: z.string().describe('End time in HH:MM format'),
+        }),
+        func: async ({ doctorId, date, startTime, endTime }) => {
+          const appointment = await this.appointmentsService.bookAppointment(
+            userId,
+            {
+              doctorId,
+              date,
+              startTime,
+              endTime,
+            },
+          );
+          return JSON.stringify(appointment);
+        },
+      }),
+      new DynamicStructuredTool({
+        name: 'search_doctors',
+        description: 'Search for doctors by name or specialization.',
+        schema: z.object({
+          search: z
+            .string()
+            .optional()
+            .describe('Search term (name or specialization)'),
+          specialization: z
+            .string()
+            .optional()
+            .describe('Specific specialization to filter by'),
+        }),
+        func: async ({ search, specialization }) => {
+          const doctors = await this.doctorService.findAllDoctors({
+            search,
+            specialization,
+          });
+          return JSON.stringify(doctors);
+        },
+      }),
+    ];
   }
 
   async recommendDoctor(file: Express.Multer.File) {
-    console.log('Received file for AI analysis:', {
-      filename: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size,
-    });
+    this.logger.log(`Analyzing report: ${file.originalname} using LangChain`);
 
     try {
-      if (!file || !file.buffer) {
-        throw new Error('File buffer is missing');
-      }
-
       const prompt = `
         Analyze this medical report and provide the following in JSON format:
         {
           "condition": "Brief description of the medical condition",
-          "specialistType": "A comma-separated list of EXACT medical specialist titles ONLY (e.g. 'Endocrinologist, Hematologist, General Physician'). Do not include explanations.",
+          "specialistType": "A comma-separated list of EXACT medical specialist titles ONLY (e.g. 'Endocrinologist, Hematologist, General Physician').",
           "summary": "A professional summary of the report for the patient",
-          "preMedicine": "Safe, over-the-counter pre-medicine or first-aid advice that the patient can take before seeing a doctor. If none are safe, state that."
+          "preMedicine": "Safe, over-the-counter pre-medicine or first-aid advice."
         }
         Only return the JSON.
       `;
 
-      console.log('Calling Gemini AI...');
-      const result = await this.model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            data: file.buffer.toString('base64'),
-            mimeType: file.mimetype,
+      const message = new HumanMessage({
+        content: [
+          { type: 'text', text: prompt },
+          {
+            type: 'image_url',
+            image_url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
           },
-        },
-      ]);
+        ],
+      });
 
-      const response = await result.response;
-      const text = response.text();
-      console.log('AI Raw Response:', text);
+      const response = await this.visionModel.invoke([message]);
+      const text = response.content as string;
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('No JSON found in AI response');
 
-      const jsonStartIndex = text.indexOf('{');
-      const jsonEndIndex = text.lastIndexOf('}');
-      if (jsonStartIndex === -1 || jsonEndIndex === -1) {
-        throw new Error(`Failed to find JSON in AI response. Raw text: ${text}`);
-      }
+      const aiAnalysis = JSON.parse(jsonMatch[0]) as {
+        condition: string;
+        specialistType: string;
+        summary: string;
+        preMedicine: string;
+      };
 
-      const jsonString = text.substring(jsonStartIndex, jsonEndIndex + 1);
-      const aiAnalysis = JSON.parse(jsonString);
-      console.log('AI Parsed Analysis:', aiAnalysis);
-
-      // Improved Recommendation Logic: Clean the specialist string and search
       const specialistSuggestions = aiAnalysis.specialistType
-        .replace(/\([^)]*\)/g, '') // Remove everything in parentheses
-        .split(/[,\/]/)
-        .map((s: string) => 
-          s.replace(/and potentially an|or potentially an|and|or|potentially/gi, '') // Remove filler words
-           .trim()
-        )
-        .filter((s: string) => s.length > 2); // Ignore very short/empty strings
+        .split(/[,/]/)
+        .map((s: string) => s.trim())
+        .filter((s: string) => s.length > 2);
 
-      console.log('Extracted specialist keywords for search:', specialistSuggestions);
-
-      let recommendedDoctors: any[] = [];
-
-      // We search for the first few suggested specializations to find matching doctors
+      const recommendedDoctors: { id: number; [key: string]: unknown }[] = [];
       for (const spec of specialistSuggestions) {
-        const result = await this.doctorService.findAllDoctors({
+        const doctorsResult = await this.doctorService.findAllDoctors({
           specialization: spec,
           availability: 'true',
-          limit: 5,
+          limit: 3,
         });
-        if (result.data && result.data.length > 0) {
-          recommendedDoctors = [...recommendedDoctors, ...result.data];
+        if (doctorsResult.data) {
+          const formattedDoctors = (doctorsResult.data as any[]).map((d) => ({
+            ...d,
+            id: d.id as number,
+          }));
+          recommendedDoctors.push(...formattedDoctors);
         }
-        // If we found enough doctors, stop searching
-        if (recommendedDoctors.length >= 10) break;
       }
 
-      // Deduplicate by ID
       const uniqueDoctors = Array.from(
         new Map(recommendedDoctors.map((d) => [d.id, d])).values(),
       );
@@ -105,9 +180,100 @@ export class AiRecommendationService {
         analysis: aiAnalysis,
         recommendedDoctors: uniqueDoctors,
       };
-    } catch (error) {
-      console.error('DETAILED AI ERROR:', error);
-      throw new InternalServerErrorException(`AI Processing Error: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`AI Recommendation Error: ${errorMessage}`);
+      throw new InternalServerErrorException(errorMessage);
+    }
+  }
+
+  async chatWithAgent(userId: number, dto: AiChatDto) {
+    const profile = await this.patientService.getProfile(userId);
+    if (!profile) throw new NotFoundException('Patient profile not found');
+
+    const patientProfile = profile as {
+      fullName: string;
+      age: number;
+      gender: string;
+    };
+
+    const systemInstruction = `
+      You are Schedula AI, a professional Medical Assistant.
+
+      PATIENT PROFILE:
+      - Name: ${patientProfile.fullName}
+      - Age: ${patientProfile.age}
+      - Gender: ${patientProfile.gender}
+
+      
+      MEDICAL CONTEXT (from uploaded reports/analysis):
+      ${dto.context || 'No specific report context provided yet.'}
+      
+      YOUR ROLE:
+      Help the patient navigate their healthcare journey. You can search for doctors, check their availability, and book appointments.
+      
+      CAPABILITIES:
+      1. search_doctors: Find doctors by name or specialization. Use this if the patient asks for a doctor or if you need to suggest someone from a specific field.
+      2. get_available_slots: MUST be called before booking. It shows available times for a doctor on a specific date.
+      3. book_appointment: Call this only when the patient has confirmed a specific slot (date, startTime, endTime) with a specific doctor.
+      
+      CONSTRAINTS:
+      - ALWAYS check availability before booking.
+      - If the patient refers to "the recommended doctor", look into the MEDICAL CONTEXT to find who they are.
+      - Be empathetic but concise. 
+      - Do not provide medical prescriptions.
+      - If a tool returns data, summarize it naturally for the patient.
+    `;
+
+    try {
+      const tools = this.getTools(userId);
+      const modelWithTools = this.model.bindTools(tools);
+
+      const messages = [
+        new SystemMessage(systemInstruction),
+        new HumanMessage(dto.message),
+      ];
+
+      const response = await modelWithTools.invoke(messages);
+
+      if (response.tool_calls && response.tool_calls.length > 0) {
+        const toolCall = response.tool_calls[0];
+        const tool = tools.find((t) => t.name === toolCall.name);
+
+        if (tool) {
+          const toolArgs = toolCall.args as Record<string, unknown>;
+          this.logger.log(
+            `LangChain triggering tool: ${tool.name} with args: ${JSON.stringify(toolArgs)}`,
+          );
+
+          const toolResult = (await (tool as any).invoke(toolArgs)) as string;
+
+          const finalResponse = await this.model.invoke([
+            ...messages,
+            response,
+            new ToolMessage({
+              tool_call_id: toolCall.id ?? '',
+              content: toolResult,
+            }),
+          ]);
+
+          return {
+            message: finalResponse.content as string,
+            toolUsed: tool.name,
+            toolResult: JSON.parse(toolResult) as unknown,
+          };
+        }
+      }
+
+      return {
+        message: response.content as string,
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`AI Agent Error: ${errorMessage}`);
+      throw new InternalServerErrorException(errorMessage);
     }
   }
 }

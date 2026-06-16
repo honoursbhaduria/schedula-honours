@@ -1,7 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { User } from './user.entity';
 import { RecurringAvailability } from '../../doctor/entities/recurring-availability.entity';
 import { CustomAvailability } from '../../doctor/entities/custom-availability.entity';
+import { Appointment } from '../../appointments/entities/appointment.entity';
 
 @Entity('doctor_profiles')
 export class DoctorProfile {
@@ -44,4 +52,7 @@ export class DoctorProfile {
 
   @OneToMany(() => CustomAvailability, (availability) => availability.doctor)
   customAvailabilities: CustomAvailability[];
+
+  @OneToMany(() => Appointment, (appointment) => appointment.doctor)
+  appointments: Appointment[];
 }
