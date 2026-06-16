@@ -266,10 +266,21 @@ export class DoctorAvailabilityService {
 
   async seedDebugData() {
     try {
-      const doctorId = 43;
+      const doctorId = 44;
       const date = '2026-06-20';
 
-      // 1. Seed Availability for Doctor 43
+      // 0. SELF-HEALING: Update the production DB enum if it's outdated
+      // We use a try-catch for the ALTER because Postgres doesn't allow 'IF NOT EXISTS' for ADD VALUE in some versions
+      try {
+        await this.dataSource.query(
+          `ALTER TYPE "appointments_status_enum" ADD VALUE 'BOOKED'`,
+        );
+        this.logger.log('Successfully added BOOKED to enum in database.');
+      } catch (e) {
+        // Ignore error if it already exists
+      }
+
+      // 1. Seed Availability for Doctor 44
       await this.customRepo.delete({ doctorId, date });
       await this.customRepo.save({
         doctorId,
@@ -277,8 +288,9 @@ export class DoctorAvailabilityService {
         startTime: '09:00',
         endTime: '17:00',
       });
+  ...
 
-      // 2. Ensure a sample patient exists or use one from DB
+      // 2. Get a patient
       const patient = (await this.dataSource.query(
         `SELECT id FROM patient_profiles LIMIT 1`,
       )) as { id: number }[];
@@ -286,26 +298,51 @@ export class DoctorAvailabilityService {
       if (patient && patient.length > 0) {
         const patientId = patient[0].id;
 
-        // 3. Create a sample appointment for Doctor 43
+        // 3. Create diverse appointments for testing
         await this.appointmentRepo.delete({ doctorId, date });
 
-        await this.appointmentRepo.save({
-          doctorId,
-          patientId,
-          date,
-          startTime: '10:00',
-          endTime: '10:30',
-          status: AppointmentStatus.BOOKED,
-        } as any);
+        const testAppointments = [
+          {
+            doctorId,
+            patientId,
+            date,
+            startTime: '10:00',
+            endTime: '10:30',
+            status: AppointmentStatus.BOOKED,
+          },
+          {
+            doctorId,
+            patientId,
+            date,
+            startTime: '11:00',
+            endTime: '11:30',
+            status: AppointmentStatus.COMPLETED,
+          },
+          {
+            doctorId,
+            patientId,
+            date,
+            startTime: '12:00',
+            endTime: '12:30',
+            status: AppointmentStatus.CANCELLED,
+          },
+        ];
+
+        await this.appointmentRepo.save(testAppointments as any);
 
         return {
-          message: `Seeded availability and 1 appointment for Doctor 43 on ${date}`,
+          message: `Seeded availability and 3 test appointments (BOOKED, COMPLETED, CANCELLED) for Doctor 44 on ${date}`,
+          doctorId,
           patientId,
+          appointments: testAppointments.map((a) => ({
+            time: a.startTime,
+            status: a.status,
+          })),
         };
       }
 
       return {
-        message: `Seeded availability for Doctor 43 on ${date}, but no patient found to create appointment.`,
+        message: `Seeded availability for Doctor 44 on ${date}, but no patient found.`,
       };
     } catch (err: unknown) {
       const error = err as {
@@ -316,8 +353,6 @@ export class DoctorAvailabilityService {
       return {
         error: true,
         message: error.message || 'Unknown error',
-        stack: error.stack,
-        detail: error.detail,
       };
     }
   }
