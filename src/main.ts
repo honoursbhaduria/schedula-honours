@@ -32,6 +32,7 @@ async function bootstrap() {
       * **Create Profile**: Use \`POST /doctor/profile\` to set up doctor details.
       * **Set Availability**: Use \`POST /doctor/availability\` for recurring slots.
       * **Set Override**: Use \`POST /doctor/availability/override\` for specific date changes.
+      * **Quick Test Data**: Use \`GET /doctor/debug/seed\` to automatically add availability and 1 appointment for Doctor 43 (if a patient exists).
       
       ### 3. Patient Flow
       * **Discover Doctors**: Use \`GET /doctor\` to find doctors.

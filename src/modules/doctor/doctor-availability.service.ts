@@ -265,16 +265,56 @@ export class DoctorAvailabilityService {
   }
 
   async seedDebugData() {
-    const doctorId = 40;
-    const date = '2026-06-20';
-    await this.customRepo.delete({ doctorId, date });
-    await this.customRepo.save({
-      doctorId,
-      date,
-      startTime: '10:00',
-      endTime: '13:00',
-    });
-    return { message: 'Seeded availability for Doctor 40 on 2026-06-20' };
+    try {
+      const doctorId = 43;
+      const date = '2026-06-20';
+
+      // 1. Seed Availability for Doctor 43
+      await this.customRepo.delete({ doctorId, date });
+      await this.customRepo.save({
+        doctorId,
+        date,
+        startTime: '09:00',
+        endTime: '17:00',
+      });
+
+      // 2. Ensure a sample patient exists or use one from DB
+      const patient = await this.dataSource.query(
+        `SELECT id FROM patient_profiles LIMIT 1`,
+      );
+
+      if (patient && patient.length > 0) {
+        const patientId = patient[0].id;
+
+        // 3. Create a sample appointment for Doctor 43
+        await this.appointmentRepo.delete({ doctorId, date });
+
+        await this.appointmentRepo.save({
+          doctorId,
+          patientId,
+          date,
+          startTime: '10:00',
+          endTime: '10:30',
+          status: AppointmentStatus.BOOKED,
+        });
+
+        return {
+          message: `Seeded availability and 1 appointment for Doctor 43 on ${date}`,
+          patientId,
+        };
+      }
+
+      return {
+        message: `Seeded availability for Doctor 43 on ${date}, but no patient found to create appointment.`,
+      };
+    } catch (err: any) {
+      return {
+        error: true,
+        message: err.message,
+        stack: err.stack,
+        detail: err.detail,
+      };
+    }
   }
 
   async getAvailableSlots(
