@@ -32,7 +32,7 @@ interface RequestWithUser {
   };
 }
 
-@ApiTags('Appointment Management')
+@ApiTags('4. Patient Flow (Appointment Booking)')
 @ApiBearerAuth()
 @Controller('appointment')
 @UseGuards(JwtAuthGuard, RolesGuard)

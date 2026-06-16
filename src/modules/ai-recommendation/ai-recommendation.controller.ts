@@ -27,7 +27,7 @@ import { Role } from '../auth/roles.enum';
 import { AiChatDto } from './dto/ai-chat.dto';
 import type { RequestWithUser } from '../../common/interfaces/request-with-user.interface';
 
-@ApiTags('5. Patient Flow (AI Recommendation)')
+@ApiTags('5. Patient Flow (AI Medical Assistant)')
 @ApiBearerAuth()
 @Controller('ai')
 @UseGuards(JwtAuthGuard, RolesGuard)

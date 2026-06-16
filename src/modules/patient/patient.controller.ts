@@ -25,7 +25,7 @@ import {
 
 import type { RequestWithUser } from '../../common/interfaces/request-with-user.interface';
 
-@ApiTags('4. Patient Flow (Profile Management)')
+@ApiTags('3. Patient Flow (Profile Management)')
 @ApiBearerAuth()
 @Controller('patient')
 @UseGuards(JwtAuthGuard, RolesGuard)

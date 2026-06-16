@@ -20,37 +20,33 @@ async function bootstrap() {
     .setTitle('Schedula API')
     .setDescription(
       `
-      # Testing Flow Guide
-      To test the system properly, follow this sequence:
-      
-      ### 1. Authentication
-      * Use **Signup** to create a Doctor and a Patient.
-      * Use **Login** to get an \`accessToken\`.
-      * Click **"Authorize"** at the top and paste the token as \`Bearer <your_token>\`.
-      
-      ### 2. Doctor Setup
-      * **Create Profile**: Use \`POST /doctor/profile\` to set up doctor details.
-      * **Set Availability**: Use \`POST /doctor/availability\` for recurring slots.
-      * **Set Override**: Use \`POST /doctor/availability/override\` for specific date changes.
-      * **Quick Test Data**: Use \`GET /doctor/debug/seed\` to automatically add availability and 1 appointment for Doctor 43 (if a patient exists).
-      
-      ### 3. Patient Flow
-      * **Discover Doctors**: Use \`GET /doctor\` to find doctors.
-      * **Check Slots**: Use \`GET /doctor/{id}/slots\` with a date (e.g., 2026-06-20) to see generated slots.
-      
-      ### 4. Appointment Management
-      * **Book Appointment**: Use \`POST /appointment\` with the details from step 3.
-      * **View My Appointments (Patient)**: Use \`GET /appointment/my\`.
-      * **Cancel Appointment**: Use \`PATCH /appointment/{id}/cancel\` (only for future dates).
-      * **View Appointments (Doctor)**: Use \`GET /doctor/appointments\` to see patients who booked with you.
-      
-      ### 5. AI Medical Assistant (LangChain)
-      * **Report Analysis**: Use \`POST /ai/recommend-doctor\` to upload a report. Note the recommended doctors in the response.
-      * **Interactive Agent**: Use \`POST /ai/chat\`.
-        * Pass the report analysis in the \`context\` field.
-        * Ask: *"Find a specialist for my condition"* or *"What are Dr. Smith's slots for tomorrow?"*
-        * Finally: *"Book the 10:00 AM slot with Dr. Smith"*.
-    `,
+      # Schedula End-to-End Testing Guide
+
+      Follow this sequenced journey to test the full Schedula ecosystem in production.
+
+      ### PHASE 1: Identity & Security
+      *   **Signup & Login**: Create both a **PATIENT** and **DOCTOR** account.
+      *   **Authorize**: Click the **Authorize** button at the top and paste your token as \`Bearer <TOKEN>\`.
+
+      ### PHASE 2: Doctor Onboarding (Use Doctor Token)
+      *   **Create Profile**: Initialize your professional profile in **Tag 2**.
+      *   **Availability**: Define your recurring schedule (Tag 2) or use the **Quick Seed** (\`GET /doctor/debug/seed\`) to instantly set up Doctor 43 for testing.
+
+      ### PHASE 3: Patient Journey (Use Patient Token)
+      *   **Discovery**: Find doctors using filters or fuzzy search in **Tag 2**.
+      *   **Check Slots**: Choose a date and view available 30-min windows.
+      *   **Booking**: Book your preferred slot in **Tag 4**.
+
+      ### PHASE 4: The AI Assistant Experience
+      *   **Report Analysis**: Upload a medical report in **Tag 5** to get instant specialist recommendations.
+      *   **Agentic Chat**: Open a chat in **Tag 5**. Use the analysis as \`context\`. 
+      *   **Agent Flow**: Ask: *"Find a specialist for my condition"* -> *"When is Dr. Smith free?"* -> *"Book the 10:00 AM slot"*.
+
+      ### PHASE 5: Management
+      *   **Verification**: Check your personal dashboard (Tag 4 for Patients, Tag 2 for Doctors).
+      *   **Lifecycle**: Cancel future appointments to test state transitions.
+      `,
+
     )
     .setVersion('1.0')
     .addBearerAuth()
