@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Appointment } from './entities/appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { AppointmentQueryDto } from './dto/appointment-query.dto';
 import { AppointmentStatus } from './enums/appointment-status.enum';
 import { DoctorProfile } from '../users/entities/doctor-profile.entity';
 import { PatientProfile } from '../users/entities/patient-profile.entity';
@@ -97,23 +98,41 @@ export class AppointmentsService {
     return this.appointmentRepo.save(appointment);
   }
 
-  async getPatientAppointments(userId: number): Promise<Appointment[]> {
+  async getPatientAppointments(
+    userId: number,
+    query: AppointmentQueryDto,
+  ): Promise<Appointment[]> {
     const patient = await this.patientRepo.findOne({ where: { userId } });
     if (!patient) throw new NotFoundException('Patient profile not found');
 
+    const { date, status } = query;
+
     return this.appointmentRepo.find({
-      where: { patientId: patient.id },
+      where: {
+        patientId: patient.id,
+        ...(date && { date }),
+        ...(status && { status }),
+      },
       relations: { doctor: true },
       order: { date: 'DESC', startTime: 'DESC' },
     });
   }
 
-  async getDoctorAppointments(userId: number): Promise<Appointment[]> {
+  async getDoctorAppointments(
+    userId: number,
+    query: AppointmentQueryDto,
+  ): Promise<Appointment[]> {
     const doctor = await this.doctorRepo.findOne({ where: { userId } });
     if (!doctor) throw new NotFoundException('Doctor profile not found');
 
+    const { date, status } = query;
+
     return this.appointmentRepo.find({
-      where: { doctorId: doctor.id },
+      where: {
+        doctorId: doctor.id,
+        ...(date && { date }),
+        ...(status && { status }),
+      },
       relations: { patient: true },
       order: { date: 'DESC', startTime: 'DESC' },
     });

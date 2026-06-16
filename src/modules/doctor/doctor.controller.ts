@@ -81,12 +81,17 @@ export class DoctorController {
     return this.doctorService.updateProfile(req.user.userId, dto);
   }
 
+import { AppointmentQueryDto } from '../appointments/dto/appointment-query.dto';
+...
   @Get('appointments')
   @Roles(Role.DOCTOR)
   @ApiOperation({ summary: 'View my appointments (Doctor only)' })
   @ApiResponse({ status: 200, description: 'List of appointments' })
-  async getMyAppointments(@Req() req: RequestWithUser) {
-    return this.appointmentsService.getDoctorAppointments(req.user.userId);
+  async getMyAppointments(
+    @Req() req: RequestWithUser,
+    @Query() query: AppointmentQueryDto,
+  ) {
+    return this.appointmentsService.getDoctorAppointments(req.user.userId, query);
   }
 
   @Get(':id/slots')

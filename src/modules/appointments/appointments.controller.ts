@@ -8,6 +8,7 @@ import {
   Req,
   UseGuards,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,6 +22,7 @@ import { Roles } from '../auth/roles.decorator';
 import { Role } from '../auth/roles.enum';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { AppointmentQueryDto } from './dto/appointment-query.dto';
 
 interface RequestWithUser {
   user: {
@@ -49,8 +51,14 @@ export class AppointmentsController {
   @Roles(Role.PATIENT)
   @ApiOperation({ summary: 'View my appointments (Patient only)' })
   @ApiResponse({ status: 200, description: 'List of appointments' })
-  async getMy(@Req() req: RequestWithUser) {
-    return this.appointmentsService.getPatientAppointments(req.user.userId);
+  async getMy(
+    @Req() req: RequestWithUser,
+    @Query() query: AppointmentQueryDto,
+  ) {
+    return this.appointmentsService.getPatientAppointments(
+      req.user.userId,
+      query,
+    );
   }
 
   @Patch(':id/cancel')
