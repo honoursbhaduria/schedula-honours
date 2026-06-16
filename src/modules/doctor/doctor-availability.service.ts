@@ -279,9 +279,9 @@ export class DoctorAvailabilityService {
       });
 
       // 2. Ensure a sample patient exists or use one from DB
-      const patient = await this.dataSource.query(
+      const patient = (await this.dataSource.query(
         `SELECT id FROM patient_profiles LIMIT 1`,
-      );
+      )) as { id: number }[];
 
       if (patient && patient.length > 0) {
         const patientId = patient[0].id;
@@ -296,7 +296,7 @@ export class DoctorAvailabilityService {
           startTime: '10:00',
           endTime: '10:30',
           status: AppointmentStatus.BOOKED,
-        });
+        } as any);
 
         return {
           message: `Seeded availability and 1 appointment for Doctor 43 on ${date}`,
@@ -307,12 +307,17 @@ export class DoctorAvailabilityService {
       return {
         message: `Seeded availability for Doctor 43 on ${date}, but no patient found to create appointment.`,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as {
+        message?: string;
+        stack?: string;
+        detail?: string;
+      };
       return {
         error: true,
-        message: err.message,
-        stack: err.stack,
-        detail: err.detail,
+        message: error.message || 'Unknown error',
+        stack: error.stack,
+        detail: error.detail,
       };
     }
   }

@@ -164,10 +164,12 @@ export class AiRecommendationService {
           limit: 3,
         });
         if (doctorsResult.data) {
-          const formattedDoctors = (doctorsResult.data as any[]).map((d) => ({
-            ...d,
-            id: d.id as number,
-          }));
+          const formattedDoctors = (doctorsResult.data as unknown as any[]).map(
+            (d: any) => ({
+              ...d,
+              id: d.id as number,
+            }),
+          );
           recommendedDoctors.push(...formattedDoctors);
         }
       }
@@ -247,7 +249,9 @@ export class AiRecommendationService {
             `LangChain triggering tool: ${tool.name} with args: ${JSON.stringify(toolArgs)}`,
           );
 
-          const toolResult = (await (tool as any).invoke(toolArgs)) as string;
+          const toolResult = (await (tool as any).invoke(
+            toolArgs as any,
+          )) as string;
 
           const finalResponse = await this.model.invoke([
             ...messages,

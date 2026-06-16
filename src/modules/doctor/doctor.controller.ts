@@ -29,6 +29,7 @@ import {
   UpdateDoctorProfileDto,
 } from './dto/doctor-profile.dto';
 import { DoctorQueryDto } from './dto/doctor-query.dto';
+import { AppointmentQueryDto } from '../appointments/dto/appointment-query.dto';
 
 import type { RequestWithUser } from '../../common/interfaces/request-with-user.interface';
 
@@ -81,8 +82,6 @@ export class DoctorController {
     return this.doctorService.updateProfile(req.user.userId, dto);
   }
 
-import { AppointmentQueryDto } from '../appointments/dto/appointment-query.dto';
-...
   @Get('appointments')
   @Roles(Role.DOCTOR)
   @ApiOperation({ summary: 'View my appointments (Doctor only)' })
@@ -91,7 +90,10 @@ import { AppointmentQueryDto } from '../appointments/dto/appointment-query.dto';
     @Req() req: RequestWithUser,
     @Query() query: AppointmentQueryDto,
   ) {
-    return this.appointmentsService.getDoctorAppointments(req.user.userId, query);
+    return this.appointmentsService.getDoctorAppointments(
+      req.user.userId,
+      query,
+    );
   }
 
   @Get(':id/slots')
