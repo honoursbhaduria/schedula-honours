@@ -288,7 +288,6 @@ export class DoctorAvailabilityService {
         startTime: '09:00',
         endTime: '17:00',
       });
-  ...
 
       // 2. Get a patient
       const patient = (await this.dataSource.query(
