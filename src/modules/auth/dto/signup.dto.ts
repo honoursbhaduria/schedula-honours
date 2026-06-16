@@ -1,4 +1,13 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsOptional, IsNumber, Min } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  IsEnum,
+  IsOptional,
+  IsNumber,
+  Min,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '../roles.enum';
 
@@ -38,23 +47,38 @@ export class SignupDto {
   @IsString()
   phone?: string;
 
-  @ApiProperty({ example: 'Cardiology', required: false, description: 'Required if role is DOCTOR' })
+  @ApiProperty({
+    example: 'Cardiology',
+    required: false,
+    description: 'Required if role is DOCTOR',
+  })
   @IsOptional()
   @IsString()
   specialization?: string;
 
-  @ApiProperty({ example: 10, required: false, description: 'Required if role is DOCTOR' })
+  @ApiProperty({
+    example: 10,
+    required: false,
+    description: 'Required if role is DOCTOR',
+  })
   @IsOptional()
   @IsNumber()
   @Min(0)
   experience?: number;
 
-  @ApiProperty({ example: 'Experienced cardiologist with 10 years of practice.', required: false })
+  @ApiProperty({
+    example: 'Experienced cardiologist with 10 years of practice.',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   bio?: string;
 
-  @ApiProperty({ example: 50, required: false, description: 'Required if role is DOCTOR' })
+  @ApiProperty({
+    example: 50,
+    required: false,
+    description: 'Required if role is DOCTOR',
+  })
   @IsOptional()
   @IsNumber()
   @Min(0)

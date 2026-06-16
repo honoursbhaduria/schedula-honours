@@ -272,7 +272,7 @@ export class DoctorAvailabilityService {
       doctorId,
       date,
       startTime: '10:00',
-      endTime: '13:00'
+      endTime: '13:00',
     });
     return { message: 'Seeded availability for Doctor 40 on 2026-06-20' };
   }
@@ -284,7 +284,9 @@ export class DoctorAvailabilityService {
   ) {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
-      throw new BadRequestException('Invalid date format. Expected YYYY-MM-DD.');
+      throw new BadRequestException(
+        'Invalid date format. Expected YYYY-MM-DD.',
+      );
     }
 
     const now = new Date();
@@ -324,7 +326,7 @@ export class DoctorAvailabilityService {
       where: {
         doctorId,
         date: dateString,
-        status: AppointmentStatus.SCHEDULED,
+        status: AppointmentStatus.BOOKED,
       },
     });
 

@@ -12,6 +12,20 @@ import {
 } from './dto/doctor-profile.dto';
 import { DoctorQueryDto } from './dto/doctor-query.dto';
 
+export interface DoctorProfileResponse {
+  id: number;
+  userId: number;
+  email?: string;
+  fullName: string;
+  specialization: string;
+  experience: number;
+  qualification: string;
+  consultationFee: number;
+  availability: string;
+  isAvailable: boolean;
+  profileDetails: string | null;
+}
+
 @Injectable()
 export class DoctorService {
   constructor(
@@ -136,7 +150,7 @@ export class DoctorService {
     return this.doctorProfileRepository.save(profile);
   }
 
-  async getProfile(userId: number): Promise<any> {
+  async getProfile(userId: number): Promise<DoctorProfileResponse> {
     const profile = await this.doctorProfileRepository.findOne({
       where: { userId },
       relations: { user: true },
@@ -164,7 +178,7 @@ export class DoctorService {
   async updateProfile(
     userId: number,
     dto: UpdateDoctorProfileDto,
-  ): Promise<any> {
+  ): Promise<DoctorProfileResponse> {
     const profile = await this.doctorProfileRepository.findOne({
       where: { userId },
     });

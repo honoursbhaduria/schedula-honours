@@ -37,7 +37,9 @@ import { Appointment } from './modules/appointments/entities/appointment.entity'
         ],
         synchronize: false, // Set to true for development if you don't want to use migrations
         logging: true,
-        ssl: configService.get('DATABASE_URL')?.includes('neon') ? { rejectUnauthorized: false } : false,
+        ssl: configService.get<string>('DATABASE_URL')?.includes('neon')
+          ? { rejectUnauthorized: false }
+          : false,
       }),
     }),
     AuthModule,

@@ -44,7 +44,9 @@ export class CreateDoctorProfileDto {
   @IsOptional()
   isAvailable?: boolean;
 
-  @ApiPropertyOptional({ example: 'Experienced cardiologist specialized in heart surgery.' })
+  @ApiPropertyOptional({
+    example: 'Experienced cardiologist specialized in heart surgery.',
+  })
   @IsString()
   @IsOptional()
   profileDetails?: string;

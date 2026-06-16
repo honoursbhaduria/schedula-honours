@@ -10,18 +10,27 @@ import {
   Param,
   ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Role } from '../auth/roles.enum';
 import { DoctorService } from './doctor.service';
 import { DoctorAvailabilityService } from './doctor-availability.service';
+import { AppointmentsService } from '../appointments/appointments.service';
 import {
   CreateDoctorProfileDto,
   UpdateDoctorProfileDto,
 } from './dto/doctor-profile.dto';
 import { DoctorQueryDto } from './dto/doctor-query.dto';
+
+import type { RequestWithUser } from '../../common/interfaces/request-with-user.interface';
 
 @ApiTags('2. Doctor Flow (Profile & Slots)')
 @ApiBearerAuth()
@@ -31,6 +40,7 @@ export class DoctorController {
   constructor(
     private readonly doctorService: DoctorService,
     private readonly availabilityService: DoctorAvailabilityService,
+    private readonly appointmentsService: AppointmentsService,
   ) {}
 
   @Get()
@@ -45,7 +55,10 @@ export class DoctorController {
   @Roles(Role.DOCTOR)
   @ApiOperation({ summary: 'Create doctor profile (Doctor only)' })
   @ApiResponse({ status: 201, description: 'Profile created' })
-  async createProfile(@Req() req: any, @Body() dto: CreateDoctorProfileDto) {
+  async createProfile(
+    @Req() req: RequestWithUser,
+    @Body() dto: CreateDoctorProfileDto,
+  ) {
     return this.doctorService.createProfile(req.user.userId, dto);
   }
 
@@ -53,7 +66,7 @@ export class DoctorController {
   @Roles(Role.DOCTOR)
   @ApiOperation({ summary: 'Get current doctor profile (Doctor only)' })
   @ApiResponse({ status: 200, description: 'Profile found' })
-  async getProfile(@Req() req: any) {
+  async getProfile(@Req() req: RequestWithUser) {
     return this.doctorService.getProfile(req.user.userId);
   }
 
@@ -61,15 +74,33 @@ export class DoctorController {
   @Roles(Role.DOCTOR)
   @ApiOperation({ summary: 'Update current doctor profile (Doctor only)' })
   @ApiResponse({ status: 200, description: 'Profile updated' })
-  async updateProfile(@Req() req: any, @Body() dto: UpdateDoctorProfileDto) {
+  async updateProfile(
+    @Req() req: RequestWithUser,
+    @Body() dto: UpdateDoctorProfileDto,
+  ) {
     return this.doctorService.updateProfile(req.user.userId, dto);
+  }
+
+  @Get('appointments')
+  @Roles(Role.DOCTOR)
+  @ApiOperation({ summary: 'View my appointments (Doctor only)' })
+  @ApiResponse({ status: 200, description: 'List of appointments' })
+  async getMyAppointments(@Req() req: RequestWithUser) {
+    return this.appointmentsService.getDoctorAppointments(req.user.userId);
   }
 
   @Get(':id/slots')
   @Roles(Role.PATIENT, Role.DOCTOR)
-  @ApiOperation({ summary: 'Fetch available slots for a doctor on a specific date' })
+  @ApiOperation({
+    summary: 'Fetch available slots for a doctor on a specific date',
+  })
   @ApiQuery({ name: 'date', example: '2026-06-20', description: 'YYYY-MM-DD' })
-  @ApiQuery({ name: 'duration', example: 30, required: false, enum: [10, 15, 30, 60] })
+  @ApiQuery({
+    name: 'duration',
+    example: 30,
+    required: false,
+    enum: [10, 15, 30, 60],
+  })
   @ApiResponse({ status: 200, description: 'List of available slots' })
   async getSlots(
     @Param('id', ParseIntPipe) id: number,

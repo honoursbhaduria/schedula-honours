@@ -20,7 +20,7 @@ export class Appointment {
   @Column({
     type: 'enum',
     enum: AppointmentStatus,
-    default: AppointmentStatus.SCHEDULED,
+    default: AppointmentStatus.BOOKED,
   })
   status: AppointmentStatus;
 

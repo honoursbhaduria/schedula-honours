@@ -18,7 +18,8 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Schedula API')
-    .setDescription(`
+    .setDescription(
+      `
       # Testing Flow Guide
       To test the system properly, follow this sequence:
       
@@ -35,8 +36,21 @@ async function bootstrap() {
       ### 3. Patient Flow
       * **Discover Doctors**: Use \`GET /doctor\` to find doctors.
       * **Check Slots**: Use \`GET /doctor/{id}/slots\` with a date (e.g., 2026-06-20) to see generated slots.
-      * **AI Recommendation**: Upload a report to \`POST /ai/recommend-doctor\` for automated matching.
-    `)
+      
+      ### 4. Appointment Management
+      * **Book Appointment**: Use \`POST /appointment\` with the details from step 3.
+      * **View My Appointments (Patient)**: Use \`GET /appointment/my\`.
+      * **Cancel Appointment**: Use \`PATCH /appointment/{id}/cancel\` (only for future dates).
+      * **View Appointments (Doctor)**: Use \`GET /doctor/appointments\` to see patients who booked with you.
+      
+      ### 5. AI Medical Assistant (LangChain)
+      * **Report Analysis**: Use \`POST /ai/recommend-doctor\` to upload a report. Note the recommended doctors in the response.
+      * **Interactive Agent**: Use \`POST /ai/chat\`.
+        * Pass the report analysis in the \`context\` field.
+        * Ask: *"Find a specialist for my condition"* or *"What are Dr. Smith's slots for tomorrow?"*
+        * Finally: *"Book the 10:00 AM slot with Dr. Smith"*.
+    `,
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -46,6 +60,11 @@ async function bootstrap() {
   const port = process.env.PORT || 3000;
   await app.listen(port);
   logger.log(`Application is running on: http://localhost:${port}`);
-  logger.log(`Swagger documentation available at: http://localhost:${port}/api/docs`);
+  logger.log(
+    `Swagger documentation available at: http://localhost:${port}/api/docs`,
+  );
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

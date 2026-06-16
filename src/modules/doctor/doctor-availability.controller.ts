@@ -11,7 +11,13 @@ import {
   Param,
   ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -42,7 +48,9 @@ export class DoctorAvailabilityController {
 
   @Post()
   @Roles(Role.DOCTOR)
-  @ApiOperation({ summary: 'Set recurring availability for a day of week (Doctor only)' })
+  @ApiOperation({
+    summary: 'Set recurring availability for a day of week (Doctor only)',
+  })
   @ApiResponse({ status: 201, description: 'Recurring availability set' })
   async createRecurring(
     @Req() req: RequestWithUser,
@@ -84,7 +92,10 @@ export class DoctorAvailabilityController {
 
   @Post('override')
   @Roles(Role.DOCTOR)
-  @ApiOperation({ summary: 'Set custom availability override for a specific date (Doctor only)' })
+  @ApiOperation({
+    summary:
+      'Set custom availability override for a specific date (Doctor only)',
+  })
   @ApiResponse({ status: 201, description: 'Override set' })
   async createOverride(
     @Req() req: RequestWithUser,
@@ -95,7 +106,9 @@ export class DoctorAvailabilityController {
 
   @Get('date')
   @Roles(Role.DOCTOR)
-  @ApiOperation({ summary: 'Get availability for a specific date (Doctor only)' })
+  @ApiOperation({
+    summary: 'Get availability for a specific date (Doctor only)',
+  })
   @ApiQuery({ name: 'date', example: '2026-06-20' })
   @ApiResponse({ status: 200, description: 'Availability for date' })
   async getAvailabilityByDate(

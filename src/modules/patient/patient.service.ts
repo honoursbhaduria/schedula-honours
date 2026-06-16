@@ -11,6 +11,17 @@ import {
   UpdatePatientProfileDto,
 } from './dto/patient-profile.dto';
 
+export interface PatientProfileResponse {
+  id: number;
+  userId: number;
+  email?: string;
+  fullName: string;
+  age: number;
+  gender: string;
+  contactDetails: string;
+  basicHealthInfo: string | null;
+}
+
 @Injectable()
 export class PatientService {
   constructor(
@@ -36,7 +47,7 @@ export class PatientService {
     return this.patientProfileRepository.save(profile);
   }
 
-  async getProfile(userId: number): Promise<any> {
+  async getProfile(userId: number): Promise<PatientProfileResponse> {
     const profile = await this.patientProfileRepository.findOne({
       where: { userId },
       relations: { user: true },
@@ -62,7 +73,7 @@ export class PatientService {
   async updateProfile(
     userId: number,
     dto: UpdatePatientProfileDto,
-  ): Promise<any> {
+  ): Promise<PatientProfileResponse> {
     const profile = await this.patientProfileRepository.findOne({
       where: { userId },
     });

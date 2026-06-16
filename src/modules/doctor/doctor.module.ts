@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DoctorController } from './doctor.controller';
 import { DoctorService } from './doctor.service';
@@ -16,7 +16,7 @@ import { AppointmentModule } from '../appointments/appointments.module';
       RecurringAvailability,
       CustomAvailability,
     ]),
-    AppointmentModule,
+    forwardRef(() => AppointmentModule),
   ],
   controllers: [DoctorAvailabilityController, DoctorController],
   providers: [DoctorService, DoctorAvailabilityService],

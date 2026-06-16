@@ -9,17 +9,26 @@ import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class DoctorQueryDto {
-  @ApiPropertyOptional({ example: 'Smith', description: 'Search by doctor name' })
+  @ApiPropertyOptional({
+    example: 'Smith',
+    description: 'Search by doctor name',
+  })
   @IsOptional()
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ example: 'Cardiology', description: 'Filter by specialization' })
+  @ApiPropertyOptional({
+    example: 'Cardiology',
+    description: 'Filter by specialization',
+  })
   @IsOptional()
   @IsString()
   specialization?: string;
 
-  @ApiPropertyOptional({ example: 'true', description: 'Filter by availability (true/false)' })
+  @ApiPropertyOptional({
+    example: 'true',
+    description: 'Filter by availability (true/false)',
+  })
   @IsOptional()
   @IsBooleanString()
   availability?: string;

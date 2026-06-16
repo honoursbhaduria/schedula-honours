@@ -24,10 +24,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? exception.getResponse()
         : { message: 'Internal server error' };
 
-    const message =
-      typeof exceptionResponse === 'object' && exceptionResponse !== null
-        ? (exceptionResponse as any).message || (exceptionResponse as any).error
-        : exceptionResponse;
+    let message: string;
+
+    if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+      const responseObj = exceptionResponse as Record<string, unknown>;
+      message =
+        (responseObj.message as string) || (responseObj.error as string);
+    } else {
+      message = String(exceptionResponse);
+    }
 
     response.status(status).json({
       success: false,

@@ -7,7 +7,7 @@ async function seed() {
   try {
     console.log('Initializing Data Source...');
     await AppDataSource.initialize();
-    
+
     const recurringRepo = AppDataSource.getRepository(RecurringAvailability);
     const customRepo = AppDataSource.getRepository(CustomAvailability);
 
@@ -20,7 +20,7 @@ async function seed() {
       doctorId,
       dayOfWeek: DayOfWeek.SATURDAY,
       startTime: '09:00',
-      endTime: '12:00'
+      endTime: '12:00',
     });
     await recurringRepo.save(recurring);
     console.log('Added recurring availability: Sat 09:00-12:00');
@@ -30,7 +30,7 @@ async function seed() {
       doctorId,
       date: '2026-06-20',
       startTime: '14:00',
-      endTime: '17:00'
+      endTime: '17:00',
     });
     await customRepo.save(override);
     console.log('Added custom override for 2026-06-20: 14:00-17:00');
@@ -43,4 +43,7 @@ async function seed() {
   }
 }
 
-seed();
+seed().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

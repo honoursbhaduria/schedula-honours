@@ -7,7 +7,12 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -17,6 +22,8 @@ import {
   CreatePatientProfileDto,
   UpdatePatientProfileDto,
 } from './dto/patient-profile.dto';
+
+import type { RequestWithUser } from '../../common/interfaces/request-with-user.interface';
 
 @ApiTags('4. Patient Flow (Profile Management)')
 @ApiBearerAuth()
@@ -29,7 +36,10 @@ export class PatientController {
   @Roles(Role.PATIENT)
   @ApiOperation({ summary: 'Create patient profile (Patient only)' })
   @ApiResponse({ status: 201, description: 'Profile created' })
-  async createProfile(@Req() req: any, @Body() dto: CreatePatientProfileDto) {
+  async createProfile(
+    @Req() req: RequestWithUser,
+    @Body() dto: CreatePatientProfileDto,
+  ) {
     return this.patientService.createProfile(req.user.userId, dto);
   }
 
@@ -37,7 +47,7 @@ export class PatientController {
   @Roles(Role.PATIENT)
   @ApiOperation({ summary: 'Get current patient profile (Patient only)' })
   @ApiResponse({ status: 200, description: 'Profile found' })
-  async getProfile(@Req() req: any) {
+  async getProfile(@Req() req: RequestWithUser) {
     return this.patientService.getProfile(req.user.userId);
   }
 
@@ -45,7 +55,10 @@ export class PatientController {
   @Roles(Role.PATIENT)
   @ApiOperation({ summary: 'Update current patient profile (Patient only)' })
   @ApiResponse({ status: 200, description: 'Profile updated' })
-  async updateProfile(@Req() req: any, @Body() dto: UpdatePatientProfileDto) {
+  async updateProfile(
+    @Req() req: RequestWithUser,
+    @Body() dto: UpdatePatientProfileDto,
+  ) {
     return this.patientService.updateProfile(req.user.userId, dto);
   }
 }
