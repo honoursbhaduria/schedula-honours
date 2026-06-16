@@ -10,6 +10,8 @@ import { Repository, DataSource } from 'typeorm';
 import { RecurringAvailability } from './entities/recurring-availability.entity';
 import { CustomAvailability } from './entities/custom-availability.entity';
 import { DoctorProfile } from '../users/entities/doctor-profile.entity';
+import { Appointment } from '../appointments/entities/appointment.entity';
+import { AppointmentStatus } from '../appointments/enums/appointment-status.enum';
 import {
   CreateRecurringAvailabilityDto,
   UpdateRecurringAvailabilityDto,
@@ -28,12 +30,20 @@ export class DoctorAvailabilityService {
     private readonly customRepo: Repository<CustomAvailability>,
     @InjectRepository(DoctorProfile)
     private readonly doctorRepo: Repository<DoctorProfile>,
+    @InjectRepository(Appointment)
+    private readonly appointmentRepo: Repository<Appointment>,
     private readonly dataSource: DataSource,
   ) {}
 
   private timeToMinutes(time: string): number {
     const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
+    return hours * 60 + (minutes || 0);
+  }
+
+  private minutesToTime(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   }
 
   private validateTimeRange(startTime: string, endTime: string) {
@@ -213,6 +223,10 @@ export class DoctorAvailabilityService {
 
   async getAvailabilityForDate(userId: number, dateString: string) {
     const doctor = await this.findDoctorProfile(userId);
+    return this.getAvailabilityForDoctorDate(doctor.id, dateString);
+  }
+
+  async getAvailabilityForDoctorDate(doctorId: number, dateString: string) {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
       throw new BadRequestException(
@@ -221,12 +235,11 @@ export class DoctorAvailabilityService {
     }
 
     const overrides = await this.customRepo.find({
-      where: { doctorId: doctor.id, date: dateString },
+      where: { doctorId, date: dateString },
       order: { startTime: 'ASC' },
     });
 
     if (overrides.length > 0) {
-      // If there's a null slot, it means fully unavailable
       if (overrides.length === 1 && overrides[0].startTime === null) {
         return [];
       }
@@ -242,11 +255,114 @@ export class DoctorAvailabilityService {
       'FRIDAY',
       'SATURDAY',
     ];
-    const dayOfWeek = days[date.getDay()] as DayOfWeek;
+    // Use UTC methods because new Date('YYYY-MM-DD') is parsed as UTC
+    const dayOfWeek = days[date.getUTCDay()] as DayOfWeek;
 
     return this.recurringRepo.find({
-      where: { doctorId: doctor.id, dayOfWeek },
+      where: { doctorId, dayOfWeek },
       order: { startTime: 'ASC' },
     });
+  }
+
+  async seedDebugData() {
+    const doctorId = 40;
+    const date = '2026-06-20';
+    await this.customRepo.delete({ doctorId, date });
+    await this.customRepo.save({
+      doctorId,
+      date,
+      startTime: '10:00',
+      endTime: '13:00'
+    });
+    return { message: 'Seeded availability for Doctor 40 on 2026-06-20' };
+  }
+
+  async getAvailableSlots(
+    doctorId: number,
+    dateString: string,
+    duration: number = 30,
+  ) {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      throw new BadRequestException('Invalid date format. Expected YYYY-MM-DD.');
+    }
+
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD in server local time
+
+    if (dateString < todayStr) {
+      throw new BadRequestException('Cannot fetch slots for past dates');
+    }
+
+    const doctor = await this.doctorRepo.findOne({ where: { id: doctorId } });
+    if (!doctor) throw new NotFoundException('Doctor not found');
+
+    if (![10, 15, 30, 60].includes(Number(duration))) {
+      throw new BadRequestException(
+        'Invalid duration. Allowed values: 10, 15, 30, 60 minutes.',
+      );
+    }
+
+    const availability = await this.getAvailabilityForDoctorDate(
+      doctorId,
+      dateString,
+    );
+    if (availability.length === 0) return [];
+
+    let potentialSlots = this.generateSlotsFromRanges(availability, duration);
+
+    // Filter past slots if today
+    if (dateString === todayStr) {
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      potentialSlots = potentialSlots.filter(
+        (slot) => this.timeToMinutes(slot.startTime) > currentMinutes,
+      );
+    }
+
+    // Filter booked slots
+    const bookedAppointments = await this.appointmentRepo.find({
+      where: {
+        doctorId,
+        date: dateString,
+        status: AppointmentStatus.SCHEDULED,
+      },
+    });
+
+    return potentialSlots.filter((slot) => {
+      const slotStart = this.timeToMinutes(slot.startTime);
+      const slotEnd = this.timeToMinutes(slot.endTime);
+
+      const isBooked = bookedAppointments.some((booked) => {
+        const bookedStart = this.timeToMinutes(booked.startTime);
+        const bookedEnd = this.timeToMinutes(booked.endTime);
+        return slotStart < bookedEnd && slotEnd > bookedStart;
+      });
+
+      return !isBooked;
+    });
+  }
+
+  private generateSlotsFromRanges(
+    ranges: { startTime: string | null; endTime: string | null }[],
+    duration: number,
+  ) {
+    const slots: { startTime: string; endTime: string }[] = [];
+
+    for (const range of ranges) {
+      if (!range.startTime || !range.endTime) continue;
+
+      let current = this.timeToMinutes(range.startTime);
+      const end = this.timeToMinutes(range.endTime);
+
+      while (current + duration <= end) {
+        slots.push({
+          startTime: this.minutesToTime(current),
+          endTime: this.minutesToTime(current + duration),
+        });
+        current += duration;
+      }
+    }
+
+    return slots;
   }
 }

@@ -1,16 +1,16 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import { DoctorService } from '../doctor/doctor.service';
 
 @Injectable()
 export class AiRecommendationService {
   private genAI: GoogleGenerativeAI;
-  private model: any;
+  private model: GenerativeModel;
 
   constructor(
-    private configService: ConfigService,
-    private doctorService: DoctorService,
+    private readonly configService: ConfigService,
+    private readonly doctorService: DoctorService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
@@ -36,7 +36,7 @@ export class AiRecommendationService {
         Analyze this medical report and provide the following in JSON format:
         {
           "condition": "Brief description of the medical condition",
-          "specialistType": "The type of medical specialist needed (e.g., Cardiologist, Dermatologist, General Physician, etc.)",
+          "specialistType": "A comma-separated list of EXACT medical specialist titles ONLY (e.g. 'Endocrinologist, Hematologist, General Physician'). Do not include explanations.",
           "summary": "A professional summary of the report for the patient",
           "preMedicine": "Safe, over-the-counter pre-medicine or first-aid advice that the patient can take before seeing a doctor. If none are safe, state that."
         }
@@ -58,35 +58,56 @@ export class AiRecommendationService {
       const text = response.text();
       console.log('AI Raw Response:', text);
 
-      // Find the first occurrence of '{' and the last occurrence of '}'
       const jsonStartIndex = text.indexOf('{');
       const jsonEndIndex = text.lastIndexOf('}');
-
       if (jsonStartIndex === -1 || jsonEndIndex === -1) {
-        throw new Error(
-          `Failed to find JSON in AI response. Raw text: ${text}`,
-        );
+        throw new Error(`Failed to find JSON in AI response. Raw text: ${text}`);
       }
 
       const jsonString = text.substring(jsonStartIndex, jsonEndIndex + 1);
       const aiAnalysis = JSON.parse(jsonString);
       console.log('AI Parsed Analysis:', aiAnalysis);
 
-      // Search for doctors based on the specialist type
-      const doctors = await this.doctorService.findAllDoctors({
-        specialization: aiAnalysis.specialistType,
-        availability: 'true',
-      });
+      // Improved Recommendation Logic: Clean the specialist string and search
+      const specialistSuggestions = aiAnalysis.specialistType
+        .replace(/\([^)]*\)/g, '') // Remove everything in parentheses
+        .split(/[,\/]/)
+        .map((s: string) => 
+          s.replace(/and potentially an|or potentially an|and|or|potentially/gi, '') // Remove filler words
+           .trim()
+        )
+        .filter((s: string) => s.length > 2); // Ignore very short/empty strings
+
+      console.log('Extracted specialist keywords for search:', specialistSuggestions);
+
+      let recommendedDoctors: any[] = [];
+
+      // We search for the first few suggested specializations to find matching doctors
+      for (const spec of specialistSuggestions) {
+        const result = await this.doctorService.findAllDoctors({
+          specialization: spec,
+          availability: 'true',
+          limit: 5,
+        });
+        if (result.data && result.data.length > 0) {
+          recommendedDoctors = [...recommendedDoctors, ...result.data];
+        }
+        // If we found enough doctors, stop searching
+        if (recommendedDoctors.length >= 10) break;
+      }
+
+      // Deduplicate by ID
+      const uniqueDoctors = Array.from(
+        new Map(recommendedDoctors.map((d) => [d.id, d])).values(),
+      );
 
       return {
         analysis: aiAnalysis,
-        recommendedDoctors: doctors.data,
+        recommendedDoctors: uniqueDoctors,
       };
     } catch (error) {
       console.error('DETAILED AI ERROR:', error);
-      throw new InternalServerErrorException(
-        `AI Processing Error: ${error.message}`,
-      );
+      throw new InternalServerErrorException(`AI Processing Error: ${error.message}`);
     }
   }
 }

@@ -1,11 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToOne,
-  JoinColumn,
-  OneToMany,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, OneToMany } from 'typeorm';
 import { User } from './user.entity';
 import { RecurringAvailability } from '../../doctor/entities/recurring-availability.entity';
 import { CustomAvailability } from '../../doctor/entities/custom-availability.entity';
@@ -31,7 +24,7 @@ export class DoctorProfile {
   consultationFee: number;
 
   @Column({ type: 'text' })
-  availability: string; // Consultation Hours
+  availability: string;
 
   @Column({ type: 'text', nullable: true })
   profileDetails: string;

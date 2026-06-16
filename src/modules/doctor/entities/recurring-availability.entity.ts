@@ -1,10 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  Index,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, Index } from 'typeorm';
 import { DoctorProfile } from '../../users/entities/doctor-profile.entity';
 import { DayOfWeek } from '../enums/day-of-week.enum';
 
