@@ -49,7 +49,37 @@ export class AppointmentsService {
       );
     }
 
-    // 1. Future Date/Time Check
+    // 1. Double Booking Check (Role dependent)
+    if (doctor.schedulingType === 'STREAM') {
+      const existing = await this.appointmentRepo.findOne({
+        where: {
+          doctorId: dto.doctorId,
+          date: dto.date,
+          startTime: dto.startTime,
+          status: AppointmentStatus.BOOKED,
+        },
+      });
+
+      if (existing) {
+        throw new ConflictException('This slot has already been booked');
+      }
+    } else {
+      // WAVE: Prevent the same patient from booking the same wave twice
+      const existing = await this.appointmentRepo.findOne({
+        where: {
+          doctorId: dto.doctorId,
+          patientId: patient.id,
+          date: dto.date,
+          startTime: dto.startTime,
+          status: AppointmentStatus.BOOKED,
+        },
+      });
+      if (existing) {
+        throw new ConflictException('You have already booked this wave');
+      }
+    }
+
+    // 2. Future Date/Time Check
     const appointmentDateTime = new Date(`${dto.date}T${dto.startTime}`);
     if (appointmentDateTime <= new Date()) {
       throw new BadRequestException(
@@ -57,7 +87,7 @@ export class AppointmentsService {
       );
     }
 
-    // 2. Validate Slot Availability (Duration logic)
+    // 3. Validate Slot Availability (Duration logic)
     const startMins = this.timeToMinutes(dto.startTime);
     const endMins = this.timeToMinutes(dto.endTime);
     const duration = endMins - startMins;
@@ -72,33 +102,28 @@ export class AppointmentsService {
       duration,
     );
 
-    const isSlotAvailable = availableSlots.some(
-      (slot) =>
-        slot.startTime === dto.startTime && slot.endTime === dto.endTime,
+    const slot = availableSlots.find(
+      (s) => s.startTime === dto.startTime && s.endTime === dto.endTime,
     );
 
-    if (!isSlotAvailable) {
+    if (!slot) {
       throw new BadRequestException('The selected slot is not available');
     }
 
-    // 3. Double Booking Check (Extra safety)
-    const existing = await this.appointmentRepo.findOne({
-      where: {
-        doctorId: dto.doctorId,
-        date: dto.date,
-        startTime: dto.startTime,
-        status: AppointmentStatus.BOOKED,
-      },
-    });
+    let tokenNumber: number | null = null;
 
-    if (existing) {
-      throw new ConflictException('This slot has already been booked');
+    if (doctor.schedulingType === 'WAVE') {
+      if (slot.bookedCount >= doctor.maxCapacity) {
+        throw new BadRequestException('The selected wave is full');
+      }
+      tokenNumber = slot.bookedCount + 1;
     }
 
     const appointment = this.appointmentRepo.create({
       ...dto,
       patientId: patient.id,
       status: AppointmentStatus.BOOKED,
+      tokenNumber,
     });
 
     return this.appointmentRepo.save(appointment);

@@ -9,6 +9,8 @@ import {
   FileTypeValidator,
   Body,
   Req,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -37,6 +39,7 @@ export class AiRecommendationController {
   ) {}
 
   @Post('recommend-doctor')
+  @HttpCode(HttpStatus.OK)
   @Roles(Role.PATIENT)
   @ApiOperation({
     summary: 'Upload medical report and get AI doctor recommendation',
@@ -75,6 +78,7 @@ export class AiRecommendationController {
   }
 
   @Post('chat')
+  @HttpCode(HttpStatus.OK)
   @Roles(Role.PATIENT)
   @ApiOperation({
     summary: 'Chat with AI agent for booking and medical advice',

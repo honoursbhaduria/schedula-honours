@@ -24,6 +24,9 @@ export class Appointment {
   })
   status: AppointmentStatus;
 
+  @Column({ nullable: true })
+  tokenNumber: number;
+
   @ManyToOne(() => DoctorProfile)
   doctor: DoctorProfile;
 

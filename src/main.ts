@@ -18,7 +18,12 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Schedula API')
-    .setDescription('The Schedula API documentation for Doctor and Patient management.')
+    .setDescription(
+      'The Schedula API documentation for Doctor and Patient management.\n\n' +
+      '### ADVANCED SCHEDULING (Day 9)\n' +
+      '* **STREAM (Exact Time)**: In Tag 2, set `schedulingType: STREAM`. Availability is sliced into discrete slots using `slotDuration` + `bufferTime`.\n' +
+      '* **WAVE (Token-Based)**: In Tag 2, set `schedulingType: WAVE`. Availability is shown as a window (e.g., 10-11 AM) with a `maxCapacity`. Patients are assigned tokens upon booking.',
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .build();

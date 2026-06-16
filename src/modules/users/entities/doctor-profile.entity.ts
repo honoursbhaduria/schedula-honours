@@ -10,6 +10,7 @@ import { User } from './user.entity';
 import { RecurringAvailability } from '../../doctor/entities/recurring-availability.entity';
 import { CustomAvailability } from '../../doctor/entities/custom-availability.entity';
 import { Appointment } from '../../appointments/entities/appointment.entity';
+import { SchedulingType } from '../../doctor/enums/scheduling-type.enum';
 
 @Entity('doctor_profiles')
 export class DoctorProfile {
@@ -39,6 +40,22 @@ export class DoctorProfile {
 
   @Column({ default: true })
   isAvailable: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: SchedulingType,
+    default: SchedulingType.STREAM,
+  })
+  schedulingType: SchedulingType;
+
+  @Column({ default: 15 }) // in minutes
+  slotDuration: number;
+
+  @Column({ default: 0 }) // in minutes
+  bufferTime: number;
+
+  @Column({ default: 5 }) // for WAVE
+  maxCapacity: number;
 
   @OneToOne(() => User, (user) => user.doctorProfile)
   @JoinColumn()

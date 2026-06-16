@@ -359,7 +359,7 @@ export class DoctorAvailabilityService {
   async getAvailableSlots(
     doctorId: number,
     dateString: string,
-    duration: number = 30,
+    requestedDuration?: number,
   ) {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
@@ -369,7 +369,7 @@ export class DoctorAvailabilityService {
     }
 
     const now = new Date();
-    const todayStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD in server local time
+    const todayStr = now.toLocaleDateString('en-CA');
 
     if (dateString < todayStr) {
       throw new BadRequestException('Cannot fetch slots for past dates');
@@ -378,29 +378,13 @@ export class DoctorAvailabilityService {
     const doctor = await this.doctorRepo.findOne({ where: { id: doctorId } });
     if (!doctor) throw new NotFoundException('Doctor not found');
 
-    if (![10, 15, 30, 60].includes(Number(duration))) {
-      throw new BadRequestException(
-        'Invalid duration. Allowed values: 10, 15, 30, 60 minutes.',
-      );
-    }
-
     const availability = await this.getAvailabilityForDoctorDate(
       doctorId,
       dateString,
     );
     if (availability.length === 0) return [];
 
-    let potentialSlots = this.generateSlotsFromRanges(availability, duration);
-
-    // Filter past slots if today
-    if (dateString === todayStr) {
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      potentialSlots = potentialSlots.filter(
-        (slot) => this.timeToMinutes(slot.startTime) > currentMinutes,
-      );
-    }
-
-    // Filter booked slots
+    // Filter booked appointments
     const bookedAppointments = await this.appointmentRepo.find({
       where: {
         doctorId,
@@ -409,25 +393,84 @@ export class DoctorAvailabilityService {
       },
     });
 
-    return potentialSlots.filter((slot) => {
-      const slotStart = this.timeToMinutes(slot.startTime);
-      const slotEnd = this.timeToMinutes(slot.endTime);
-
-      const isBooked = bookedAppointments.some((booked) => {
-        const bookedStart = this.timeToMinutes(booked.startTime);
-        const bookedEnd = this.timeToMinutes(booked.endTime);
-        return slotStart < bookedEnd && slotEnd > bookedStart;
-      });
-
-      return !isBooked;
-    });
+    if (doctor.schedulingType === 'WAVE') {
+      return this.generateWaveSlots(
+        doctor,
+        availability,
+        bookedAppointments,
+        dateString,
+        todayStr,
+        now,
+      );
+    } else {
+      // STREAM
+      const duration = requestedDuration || doctor.slotDuration;
+      return this.generateStreamSlots(
+        doctor,
+        availability,
+        bookedAppointments,
+        duration,
+        dateString,
+        todayStr,
+        now,
+      );
+    }
   }
 
-  private generateSlotsFromRanges(
+  private generateWaveSlots(
+    doctor: DoctorProfile,
     ranges: { startTime: string | null; endTime: string | null }[],
-    duration: number,
+    booked: Appointment[],
+    dateString: string,
+    todayStr: string,
+    now: Date,
   ) {
-    const slots: { startTime: string; endTime: string }[] = [];
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    return ranges
+      .filter((r) => r.startTime && r.endTime)
+      .map((range) => {
+        const start = this.timeToMinutes(range.startTime!);
+        const end = this.timeToMinutes(range.endTime!);
+
+        const bookingsInWindow = booked.filter((b) => {
+          const bStart = this.timeToMinutes(b.startTime);
+          return bStart >= start && bStart < end;
+        });
+
+        const isPast =
+          dateString === todayStr &&
+          this.timeToMinutes(range.endTime!) <= currentMinutes;
+
+        return {
+          type: 'WAVE',
+          startTime: range.startTime!.substring(0, 5),
+          endTime: range.endTime!.substring(0, 5),
+          maxCapacity: doctor.maxCapacity,
+          bookedCount: bookingsInWindow.length,
+          availableCount: Math.max(
+            0,
+            doctor.maxCapacity - bookingsInWindow.length,
+          ),
+          isFull: bookingsInWindow.length >= doctor.maxCapacity,
+          isPast,
+        };
+      })
+      .filter((w) => !w.isPast);
+  }
+
+  private generateStreamSlots(
+    doctor: DoctorProfile,
+    ranges: { startTime: string | null; endTime: string | null }[],
+    booked: Appointment[],
+    duration: number,
+    dateString: string,
+    todayStr: string,
+    now: Date,
+  ) {
+    const slots: any[] = [];
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const buffer = doctor.bufferTime || 0;
 
     for (const range of ranges) {
       if (!range.startTime || !range.endTime) continue;
@@ -436,11 +479,26 @@ export class DoctorAvailabilityService {
       const end = this.timeToMinutes(range.endTime);
 
       while (current + duration <= end) {
-        slots.push({
-          startTime: this.minutesToTime(current),
-          endTime: this.minutesToTime(current + duration),
+        const slotStart = current;
+        const slotEnd = current + duration;
+
+        const isBooked = booked.some((b) => {
+          const bStart = this.timeToMinutes(b.startTime);
+          const bEnd = this.timeToMinutes(b.endTime);
+          return slotStart < bEnd && slotEnd > bStart;
         });
-        current += duration;
+
+        const isPast = dateString === todayStr && slotStart <= currentMinutes;
+
+        if (!isBooked && !isPast) {
+          slots.push({
+            type: 'STREAM',
+            startTime: this.minutesToTime(slotStart),
+            endTime: this.minutesToTime(slotEnd),
+          });
+        }
+
+        current += duration + buffer;
       }
     }
 

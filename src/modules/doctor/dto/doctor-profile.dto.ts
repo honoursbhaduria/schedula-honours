@@ -5,8 +5,10 @@ import {
   IsString,
   Min,
   IsBoolean,
+  IsEnum,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SchedulingType } from '../enums/scheduling-type.enum';
 
 export class CreateDoctorProfileDto {
   @ApiProperty({ example: 'Dr. Smith' })
@@ -50,6 +52,29 @@ export class CreateDoctorProfileDto {
   @IsString()
   @IsOptional()
   profileDetails?: string;
+
+  @ApiPropertyOptional({ enum: SchedulingType, default: SchedulingType.STREAM })
+  @IsEnum(SchedulingType)
+  @IsOptional()
+  schedulingType?: SchedulingType;
+
+  @ApiPropertyOptional({ example: 15, description: 'Duration in minutes' })
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  slotDuration?: number;
+
+  @ApiPropertyOptional({ example: 5, description: 'Buffer in minutes' })
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  bufferTime?: number;
+
+  @ApiPropertyOptional({ example: 5, description: 'Max capacity for WAVE' })
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  maxCapacity?: number;
 }
 
 export class UpdateDoctorProfileDto {
@@ -94,4 +119,27 @@ export class UpdateDoctorProfileDto {
   @IsString()
   @IsOptional()
   profileDetails?: string;
+
+  @ApiPropertyOptional({ enum: SchedulingType })
+  @IsEnum(SchedulingType)
+  @IsOptional()
+  schedulingType?: SchedulingType;
+
+  @ApiPropertyOptional({ example: 15, description: 'Duration in minutes' })
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  slotDuration?: number;
+
+  @ApiPropertyOptional({ example: 5, description: 'Buffer in minutes' })
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  bufferTime?: number;
+
+  @ApiPropertyOptional({ example: 5, description: 'Max capacity for WAVE' })
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  maxCapacity?: number;
 }
