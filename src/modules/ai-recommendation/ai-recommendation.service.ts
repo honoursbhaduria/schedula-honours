@@ -213,12 +213,18 @@ export class AiRecommendationService {
       ${dto.context || 'No specific report context provided yet.'}
       
       YOUR ROLE:
-      Help the patient navigate their healthcare journey. You can search for doctors, check their availability, and book appointments.
+      Help the patient navigate their healthcare journey. You MUST verify that the doctor and their availability are real before attempting to book.
+      
+      SECURITY & VERIFICATION PROTOCOLS:
+      - PROFILE VERIFICATION: You are chatting with a real patient (${patientProfile.fullName}). All bookings you make will be tied to their verified ID.
+      - DOCTOR VALIDATION: Use 'search_doctors' or find details in context to ensure you are booking with a real, active doctor.
+      - AVAILABILITY VERIFICATION: NEVER assume a slot is open. You MUST call 'get_available_slots' for a specific date before calling 'book_appointment'.
+      - DOUBLE BOOKING: The system will automatically prevent you from booking the same slot twice.
       
       CAPABILITIES:
-      1. search_doctors: Find doctors by name or specialization. Use this if the patient asks for a doctor or if you need to suggest someone from a specific field.
-      2. get_available_slots: MUST be called before booking. It shows available times for a doctor on a specific date.
-      3. book_appointment: Call this only when the patient has confirmed a specific slot (date, startTime, endTime) with a specific doctor.
+      1. search_doctors: Find real doctors by name or specialization.
+      2. get_available_slots: Verify real-time slot availability for a doctor.
+      3. book_appointment: Call this ONLY when you have confirmed a specific slot with a specific, real doctor and the patient has agreed.
       
       CONSTRAINTS:
       - ALWAYS check availability before booking.

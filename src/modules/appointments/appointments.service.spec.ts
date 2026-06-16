@@ -108,7 +108,7 @@ describe('AppointmentsService', () => {
 
     it('should throw BadRequestException if slot is not available', async () => {
       patientRepo.findOne.mockResolvedValue({ id: 1 } as any);
-      doctorRepo.findOne.mockResolvedValue({ id: 1 } as any);
+      doctorRepo.findOne.mockResolvedValue({ id: 1, isAvailable: true } as any);
       availabilityService.getAvailableSlots.mockResolvedValue([]);
       await expect(service.bookAppointment(1, dto)).rejects.toThrow(
         BadRequestException,
@@ -117,7 +117,7 @@ describe('AppointmentsService', () => {
 
     it('should throw ConflictException if slot already booked', async () => {
       patientRepo.findOne.mockResolvedValue({ id: 1 } as any);
-      doctorRepo.findOne.mockResolvedValue({ id: 1 } as any);
+      doctorRepo.findOne.mockResolvedValue({ id: 1, isAvailable: true } as any);
       availabilityService.getAvailableSlots.mockResolvedValue([
         { startTime: '10:00', endTime: '10:30' },
       ]);
@@ -129,7 +129,7 @@ describe('AppointmentsService', () => {
 
     it('should book appointment successfully', async () => {
       patientRepo.findOne.mockResolvedValue({ id: 1 } as any);
-      doctorRepo.findOne.mockResolvedValue({ id: 1 } as any);
+      doctorRepo.findOne.mockResolvedValue({ id: 1, isAvailable: true } as any);
       availabilityService.getAvailableSlots.mockResolvedValue([
         { startTime: '10:00', endTime: '10:30' },
       ]);

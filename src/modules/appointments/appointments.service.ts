@@ -43,6 +43,12 @@ export class AppointmentsService {
       throw new NotFoundException('Doctor not found');
     }
 
+    if (!doctor.isAvailable) {
+      throw new BadRequestException(
+        'This doctor is currently not accepting appointments',
+      );
+    }
+
     // 1. Future Date/Time Check
     const appointmentDateTime = new Date(`${dto.date}T${dto.startTime}`);
     if (appointmentDateTime <= new Date()) {
