@@ -21,19 +21,23 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AiRecommendationService } from './ai-recommendation.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../auth/roles.enum';
 import { AiChatDto } from './dto/ai-chat.dto';
 import type { RequestWithUser } from '../../common/interfaces/request-with-user.interface';
 
 @ApiTags('5. Patient Flow (AI Recommendation)')
 @ApiBearerAuth()
 @Controller('ai')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AiRecommendationController {
   constructor(
     private readonly aiRecommendationService: AiRecommendationService,
   ) {}
 
   @Post('recommend-doctor')
+  @Roles(Role.PATIENT)
   @ApiOperation({
     summary: 'Upload medical report and get AI doctor recommendation',
   })
@@ -71,6 +75,7 @@ export class AiRecommendationController {
   }
 
   @Post('chat')
+  @Roles(Role.PATIENT)
   @ApiOperation({
     summary: 'Chat with AI agent for booking and medical advice',
   })
