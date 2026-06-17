@@ -5,11 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { ChatGroq } from '@langchain/groq';
 import {
   HumanMessage,
   SystemMessage,
   ToolMessage,
+  BaseMessage,
 } from '@langchain/core/messages';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
@@ -22,8 +23,8 @@ import { AiChatDto } from './dto/ai-chat.dto';
 @Injectable()
 export class AiRecommendationService {
   private readonly logger = new Logger(AiRecommendationService.name);
-  private model: ChatGoogleGenerativeAI;
-  private visionModel: ChatGoogleGenerativeAI;
+  private model: ChatGroq;
+  private visionModel: ChatGroq;
 
   constructor(
     private readonly configService: ConfigService,
@@ -32,20 +33,20 @@ export class AiRecommendationService {
     private readonly availabilityService: DoctorAvailabilityService,
     private readonly patientService: PatientService,
   ) {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    const apiKey = this.configService.get<string>('GROQ_API_KEY');
     if (!apiKey) {
-      throw new Error('GEMINI_API_KEY is not defined');
+      throw new Error('GROQ_API_KEY is not defined');
     }
 
-    this.model = new ChatGoogleGenerativeAI({
+    this.model = new ChatGroq({
       apiKey,
-      model: 'gemini-2.5-flash',
+      model: 'llama3-70b-8192',
       temperature: 0,
     });
 
-    this.visionModel = new ChatGoogleGenerativeAI({
+    this.visionModel = new ChatGroq({
       apiKey,
-      model: 'gemini-2.5-flash',
+      model: 'llama-3.2-90b-vision-preview',
       temperature: 0,
     });
   }
@@ -115,7 +116,7 @@ export class AiRecommendationService {
   }
 
   async recommendDoctor(file: Express.Multer.File) {
-    this.logger.log(`Analyzing report: ${file.originalname} using LangChain`);
+    this.logger.log(`Analyzing report: ${file.originalname} using Groq Vision`);
 
     try {
       const prompt = `
@@ -208,43 +209,32 @@ export class AiRecommendationService {
       - Age: ${patientProfile.age}
       - Gender: ${patientProfile.gender}
 
-      
       MEDICAL CONTEXT (from uploaded reports/analysis):
       ${dto.context || 'No specific report context provided yet.'}
       
       YOUR ROLE:
       Help the patient navigate their healthcare journey. You MUST verify that the doctor and their availability are real before attempting to book.
+      
       SECURITY & VERIFICATION PROTOCOLS:
       - PROFILE VERIFICATION: You are chatting with a real patient (${patientProfile.fullName}). All bookings you make will be tied to their verified ID.
-      - DOCTOR VALIDATION: Use 'search_doctors' or find details in context to ensure you are booking with a real, active doctor.
+      - DOCTOR VALIDATION: Ensure you are booking with a real, active doctor.
       - SCHEDULING TYPES: 
         1. STREAM: Doctor uses fixed slots (e.g., 10:00-10:15). You must pick an exact time.
         2. WAVE: Doctor uses time windows (e.g., 10:00-11:00) with a capacity (e.g., max 5 patients). Patients get a Token Number based on booking order.
       - AVAILABILITY VERIFICATION: NEVER assume a slot/wave is open. You MUST call 'get_available_slots' for a specific date before calling 'book_appointment'.
       - DOUBLE BOOKING: The system automatically prevents overbooking waves or double-booking slots.
-
-      CAPABILITIES:
-      ...
+      
+      GUIDELINES:
       - If a tool returns data, summarize it naturally for the patient. 
       - If it's a WAVE, tell them the window and how many spots are left (e.g., "3 out of 5 spots available").
       - After booking a WAVE, inform them of their assigned Token Number.
-
-      2. get_available_slots: Verify real-time slot availability for a doctor.
-      3. book_appointment: Call this ONLY when you have confirmed a specific slot with a specific, real doctor and the patient has agreed.
-      
-      CONSTRAINTS:
-      - ALWAYS check availability before booking.
-      - If the patient refers to "the recommended doctor", look into the MEDICAL CONTEXT to find who they are.
-      - Be empathetic but concise. 
-      - Do not provide medical prescriptions.
-      - If a tool returns data, summarize it naturally for the patient.
     `;
 
     try {
       const tools = this.getTools(userId);
       const modelWithTools = this.model.bindTools(tools);
 
-      const messages = [
+      const messages: BaseMessage[] = [
         new SystemMessage(systemInstruction),
         new HumanMessage(dto.message),
       ];
@@ -258,7 +248,7 @@ export class AiRecommendationService {
         if (tool) {
           const toolArgs = toolCall.args as Record<string, unknown>;
           this.logger.log(
-            `LangChain triggering tool: ${tool.name} with args: ${JSON.stringify(toolArgs)}`,
+            `Groq triggering tool: ${tool.name} with args: ${JSON.stringify(toolArgs)}`,
           );
 
           const toolResult = (await (tool as any).invoke(

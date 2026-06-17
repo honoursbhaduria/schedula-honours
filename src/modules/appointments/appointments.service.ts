@@ -103,7 +103,7 @@ export class AppointmentsService {
     );
 
     const slot = availableSlots.find(
-      (s) => s.startTime === dto.startTime && s.endTime === dto.endTime,
+      (s: any) => s.startTime === dto.startTime && s.endTime === dto.endTime,
     );
 
     if (!slot) {
@@ -116,14 +116,14 @@ export class AppointmentsService {
       if (slot.bookedCount >= doctor.maxCapacity) {
         throw new BadRequestException('The selected wave is full');
       }
-      tokenNumber = slot.bookedCount + 1;
+      tokenNumber = (slot.bookedCount as number) + 1;
     }
 
     const appointment = this.appointmentRepo.create({
       ...dto,
       patientId: patient.id,
       status: AppointmentStatus.BOOKED,
-      tokenNumber,
+      tokenNumber: tokenNumber as number,
     });
 
     return this.appointmentRepo.save(appointment);

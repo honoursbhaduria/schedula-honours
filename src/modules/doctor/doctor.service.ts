@@ -11,6 +11,7 @@ import {
   UpdateDoctorProfileDto,
 } from './dto/doctor-profile.dto';
 import { DoctorQueryDto } from './dto/doctor-query.dto';
+import { SchedulingType } from './enums/scheduling-type.enum';
 
 export interface DoctorProfileResponse {
   id: number;
@@ -24,6 +25,10 @@ export interface DoctorProfileResponse {
   availability: string;
   isAvailable: boolean;
   profileDetails: string | null;
+  schedulingType: SchedulingType;
+  slotDuration: number;
+  bufferTime: number;
+  maxCapacity: number;
 }
 
 @Injectable()
@@ -172,6 +177,10 @@ export class DoctorService {
       availability: profile.availability,
       isAvailable: profile.isAvailable,
       profileDetails: profile.profileDetails,
+      schedulingType: profile.schedulingType,
+      slotDuration: profile.slotDuration,
+      bufferTime: profile.bufferTime,
+      maxCapacity: profile.maxCapacity,
     };
   }
 
