@@ -135,7 +135,9 @@ export class AiRecommendationService {
           { type: 'text', text: prompt },
           {
             type: 'image_url',
-            image_url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+            image_url: {
+              url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+            },
           },
         ],
       });
@@ -201,9 +203,22 @@ export class AiRecommendationService {
       gender: string;
     };
 
+    const now = new Date();
+    const currentDateTime = now.toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'UTC',
+    });
+
     const systemInstruction = `
       You are Schedula AI, a professional Medical Assistant.
-
+      
+      CURRENT TIME: ${currentDateTime} (UTC)
+      
       PATIENT PROFILE:
       - Name: ${patientProfile.fullName}
       - Age: ${patientProfile.age}
@@ -216,6 +231,7 @@ export class AiRecommendationService {
       Help the patient navigate their healthcare journey. You MUST verify that the doctor and their availability are real before attempting to book.
       
       SECURITY & VERIFICATION PROTOCOLS:
+      - TIME AWARENESS: Today is ${currentDateTime}. If a user asks for "today", use this date. NEVER attempt to book or check availability for dates in the past.
       - PROFILE VERIFICATION: You are chatting with a real patient (${patientProfile.fullName}). All bookings you make will be tied to their verified ID.
       - DOCTOR VALIDATION: Ensure you are booking with a real, active doctor.
       - SCHEDULING TYPES: 
